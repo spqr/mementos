@@ -1,4 +1,4 @@
-#include "include/mementos.h"
+#include <mementos.h>
 
 extern int _old_main (void);
 unsigned int baseaddr;

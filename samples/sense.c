@@ -1,4 +1,4 @@
-#include "common.h"
+#include <common.h>
 
 #ifdef __MSP430__
 # include <msp430x16x.h>
