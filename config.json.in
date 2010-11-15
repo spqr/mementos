@@ -1,0 +1,21 @@
+[
+  [
+    {
+      "name" : "msp430",
+      "as" : "msp430-as",
+      "ld" : "msp430-ld",
+      "libpath" : "%%LLVMBUILD%%/msp430/lib %%LLVMBUILD%%/lib/gcc-lib/msp430/3.2.3",
+      "include" : "%%LLVMBUILD%%/msp430/include"
+    },
+    {
+      "mcu" : "msp430x2131",
+      "ldflags" : "%%LLVMBUILD%%/msp430/lib/crt430x2131.o -m msp430x2131 -lgcc",
+      "cflags" : "-D__MSP430_2131__"
+    },
+    {
+      "mcu" : "msp430x2132",
+      "ldflags" : "%%LLVMBUILD%%/msp430/lib/crt430x2132.o -m msp430x2132 -lgcc",
+      "cflags" : "-D__MSP430_2132__"
+    }
+  ]
+]

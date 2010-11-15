@@ -1,0 +1,30 @@
+.SUFFIXES: .c .o .s .bc
+
+# toolchain elements
+MCC=msp430-gcc
+CC=clang
+LLC=llc -march=msp430 -combiner-alias-analysis
+
+# chip to target (unless already defined)
+MCU ?= msp430x2131
+
+# compiler flags
+override CFLAGS+=-I$(PWD)/include -O0 -emit-llvm -ccc-host-triple msp430-elf -ccc-driver-config $(MEMENTOS_PREFIX)config.json -msp430-mcu $(MCU)
+override MCFLAGS+=-mmcu=$(MCU)
+
+# OS-specific options
+OS=$(shell uname -s)
+ifeq ($(OS),Darwin)
+ LIBEXT=dylib
+else
+ LIBEXT=so
+endif
+
+# optimization passes common to all flavors
+OPT_GSIZE=opt -load $(LLVMBUILD)/lib/MementosAnalysis.$(LIBEXT) -load $(LLVMBUILD)/lib/MementosTransforms.$(LIBEXT) -mementos-add-global-size-global -mementos-rename-main -debug -stats
+
+# instrument all loop latches
+OPT_LATCH=opt -load $(LLVMBUILD)/lib/MementosAnalysis.$(LIBEXT) -load $(LLVMBUILD)/lib/MementosTransforms.$(LIBEXT) -mementos-instrument-all-loop-latches -debug -stats
+
+# instrument all function returns
+OPT_RETURN=opt -load $(LLVMBUILD)/lib/MementosAnalysis.$(LIBEXT) -load $(LLVMBUILD)/lib/MementosTransforms.$(LIBEXT) -mementos-instrument-all-function-returns -debug -stats

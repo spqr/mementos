@@ -1,0 +1,108 @@
+#ifndef __NEWMEM_H__
+#define __NEWMEM_H__
+
+#include <msp430x21x2.h>
+#ifdef MEMENTOS_HARDWARE
+# include "pinDefWISP4.1DL.h"
+#endif // MEMENTOS_HARDWARE
+
+/* where do the segments to which we can write checkpoint bundles start? */
+#define FIRST_BUNDLE_SEG 0xFA00u
+#define SECOND_BUNDLE_SEG 0xFC00u
+#define INFOMEM_SEGSIZE 64
+#define MAINMEM_SEGSIZE 512
+
+#ifndef V_THRESH
+/* in Haskell: map (\x -> (x, round $ 65536 * (x/3.0)/2.5)) [1.8,1.9..5.0] */
+// #define V_THRESH 15729 // 1.8 volts
+// #define V_THRESH 16602 // 1.9 volts
+// #define V_THRESH 17476 // 2.0 volts
+// #define V_THRESH 18350 // 2.1 volts
+// #define V_THRESH 19224 // 2.2 volts
+// #define V_THRESH 20098 // 2.3 volts
+// #define V_THRESH 20972 // 2.4 volts
+// #define V_THRESH 21845 // 2.5 volts
+// #define V_THRESH 22719 // 2.6 volts
+// #define V_THRESH 23593 // 2.7 volts
+// #define V_THRESH 24467 // 2.8 volts
+// #define V_THRESH 25341 // 2.9 volts
+// #define V_THRESH 26214 // 3.0 volts
+// #define V_THRESH 27088 // 3.1 volts
+// #define V_THRESH 27962 // 3.2 volts
+// #define V_THRESH 28836 // 3.3 volts
+// #define V_THRESH 29710 // 3.4 volts
+// #define V_THRESH 30583 // 3.5 volts
+// #define V_THRESH 31457 // 3.6 volts
+// #define V_THRESH 32331 // 3.7 volts
+// #define V_THRESH 33205 // 3.8 volts
+// #define V_THRESH 34079 // 3.9 volts
+// #define V_THRESH 34953 // 4.0 volts
+// #define V_THRESH 35826 // 4.1 volts
+// #define V_THRESH 36700 // 4.2 volts
+// #define V_THRESH 37574 // 4.3 volts
+// #define V_THRESH 38448 // 4.4 volts
+// #define V_THRESH 39322 // 4.5 volts
+// #define V_THRESH 40195 // 4.6 volts
+// #define V_THRESH 41069 // 4.7 volts
+// #define V_THRESH 41943 // 4.8 volts
+// #define V_THRESH 42817 // 4.9 volts
+// #define V_THRESH 43691 // 5.0 volts
+#endif // V_THRESH
+
+/* silly string functions for stringifying #define'd constants -- don't ask */
+#define xstr(s) str(s)
+#define str(s) #s
+
+/* function prototypes */
+void __mementos_checkpoint (void);
+void __mementos_restore (unsigned int);
+void __mementos_erase_segment (unsigned int);
+void __mementos_mark_segment_erase (unsigned int);
+unsigned int __mementos_segment_is_empty (unsigned int);
+unsigned int __mementos_segment_marked_erase (unsigned int);
+unsigned int __mementos_locate_next_bundle (unsigned int);
+unsigned int __mementos_find_active_bundle (void);
+
+#ifdef MEMENTOS_LOGGING
+# define MEMENTOS_STATUS_STARTING_CHECKPOINT 0x1
+# define MEMENTOS_STATUS_COMPLETED_CHECKPOINT 0x2
+# define MEMENTOS_STATUS_STARTING_RESTORATION 0x4
+# define MEMENTOS_STATUS_STARTING_MAIN 0x8
+# define MEMENTOS_STATUS_FINDING_BUNDLE 0x9
+# define MEMENTOS_STATUS_DONE_FINDING_BUNDLE 0xA
+# define MEMENTOS_STATUS_HELLO 0xB
+# define MEMENTOS_STATUS_CHECKING_VOLTAGE 0xC
+# define MEMENTOS_STATUS_PROGRAM_COMPLETE 0xE
+void __mementos_log_event (unsigned char);
+#endif // MEMENTOS_LOGGING
+
+#ifdef MEMENTOS_HARDWARE
+unsigned int __mementos_voltage_check (void);
+#define VOLTAGE_CHECK __mementos_voltage_check()
+#else
+/* 0x01C0 is an (apparently) unused addr in peripheral memory on MSP430F2132, so
+ * our simulator (mspsim) tracks accesses to it and returns energy data when
+ * it's read. */
+#define VOLTAGE_CHECK_ 0x01C0
+sfrw(VOLTAGE_CHECK, VOLTAGE_CHECK_);
+#endif // MEMENTOS_HARDWARE
+
+#define MEMENTOS_MAGIC_NUMBER 0xBEADu
+
+/* horrible cheating hackery */
+#define STARTOFDATA 0x0200
+#ifdef __MSP430_2131__
+#define TOPOFSTACK 0x0300
+#elif defined(__MSP430_2132__)
+#define TOPOFSTACK 0x0400
+#endif
+
+#ifdef MEMENTOS_TIMER
+void Timer_A (void) __attribute__((interrupt(12))); // 0xFFEC for F1611 XXX
+//==TIMER_INTERVAL==
+#endif
+
+#define MEMREF(x) (*((unsigned int*)(x)))
+
+#endif /* __NEWMEM_H__ */
+// vim:ft=c
