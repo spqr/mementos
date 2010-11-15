@@ -15,6 +15,8 @@ TARGET ?= sense
 
 include Makefile.common
 
+.DUMMY: all clean gdbcommands install strip
+
 ifeq ($(TARGET),sense)
  MCLIBS=-lm
 endif

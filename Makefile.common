@@ -10,7 +10,7 @@ MCU ?= msp430x2131
 
 # compiler flags
 override CFLAGS+=-I$(PWD)/include -O0 -emit-llvm -ccc-host-triple msp430-elf -ccc-driver-config $(MEMENTOS_PREFIX)config.json -msp430-mcu $(MCU)
-override MCFLAGS+=-mmcu=$(MCU)
+override MCFLAGS+=-I$(PWD)/include -mmcu=$(MCU)
 
 # OS-specific options
 OS=$(shell uname -s)
