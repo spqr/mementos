@@ -11,7 +11,7 @@
 #
 
 # conditional definitions
-TARGET ?= sense
+TARGET ?= samples/sense
 
 include Makefile.common
 
@@ -122,8 +122,9 @@ strip: $(TARGETS)
 gdbcommands: $(TARGETS)
 	for t in $(TARGETS); do \
 		MEMENTOS_INTERESTING='restore|log_event' \
-		./gen-gdb-commands.sh $$t > $$t.gdb ; \
+		scripts/gen-gdb-commands.sh $$t > $$t.gdb ; \
 	done
 
 clean:
-	$(RM) $(TARGETS) *.o *.bc *.s config.json include/mementos.h logme *.gdb
+	$(RM) $(TARGETS) *.o samples/*.o *.bc samples/*.bc *.s samples/*.s \
+		config.json include/mementos.h logme *.gdb samples/*.gdb
