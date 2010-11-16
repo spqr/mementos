@@ -57,7 +57,7 @@ include/mementos.h:
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 config.json: config.json.in
-	sed -e "s,%%LLVMBUILD%%,$(LLVMBUILD),g" $< > $@
+	sed -e "s,%%LLVMBUILD%%,$(MCCPATH),g" $< > $@
 
 install: all
 	for t in $(TARGETS); do \
@@ -87,7 +87,7 @@ mementos+timer+latch.bc: mementos.c config.json
 $(TARGET)+latch: $(TARGET).c include/mementos.h mementos+latch.bc config.json
 	$(CC) $(CFLAGS)   -o $@.bc -DMEMENTOS_LATCH -c $<
 	$(OPT_GSIZE)      -o $@+gsize.bc $@.bc
-	llvm-link         -o $@+gsize+mementos.bc $@+gsize.bc mementos+latch.bc
+	$(CCPATH)/bin/llvm-link         -o $@+gsize+mementos.bc $@+gsize.bc mementos+latch.bc
 	$(OPT_LATCH)      -o $@+gsize+mementos+o.bc $@+gsize+mementos.bc
 	$(LLC)            -o $@.s $@+gsize+mementos+o.bc
 	$(MCC) $(MCFLAGS) -o $@ $@.s $(MCLIBS)
@@ -96,7 +96,7 @@ $(TARGET)+latch: $(TARGET).c include/mementos.h mementos+latch.bc config.json
 $(TARGET)+return: $(TARGET).c include/mementos.h mementos+return.bc config.json
 	$(CC) $(CFLAGS)   -o $@.bc -DMEMENTOS_RETURN -c $<
 	$(OPT_GSIZE)      -o $@+gsize.bc $@.bc
-	llvm-link         -o $@+gsize+mementos.bc $@+gsize.bc mementos+return.bc
+	$(CCPATH)/bin/llvm-link         -o $@+gsize+mementos.bc $@+gsize.bc mementos+return.bc
 	$(OPT_RETURN)     -o $@+gsize+mementos+o.bc $@+gsize+mementos.bc
 	$(LLC)            -o $@.s $@+gsize+mementos+o.bc
 	$(MCC) $(MCFLAGS) -o $@ $@.s $(MCLIBS)
@@ -108,7 +108,7 @@ $(TARGET)+return: $(TARGET).c include/mementos.h mementos+return.bc config.json
 $(TARGET)+timer: $(TARGET).c include/mementos.h mementos+timer+latch.bc config.json
 	$(CC) $(CFLAGS)   -o $@.bc -DMEMENTOS_TIMER -DMEMENTOS_LATCH -c $<
 	$(OPT_GSIZE)      -o $@+gsize.bc $@.bc
-	llvm-link         -o $@+gsize+mementos.bc $@+gsize.bc mementos+timer+latch.bc
+	$(CCPATH)/bin/llvm-link         -o $@+gsize+mementos.bc $@+gsize.bc mementos+timer+latch.bc
 	$(OPT_LATCH)      -o $@+gsize+mementos+o.bc $@+gsize+mementos.bc
 	$(LLC)            -o $@.s $@+gsize+mementos+o.bc
 	$(MCC) $(MCFLAGS) -o $@ $@.s $(MCLIBS)

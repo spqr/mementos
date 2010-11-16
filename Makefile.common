@@ -24,10 +24,10 @@ else
 endif
 
 # optimization passes common to all flavors
-OPT_GSIZE=opt -load $(CCPATH)/lib/libMementos.$(LIBEXT) -mementos-add-global-size-global -mementos-rename-main -debug -stats
+OPT_GSIZE=$(CCPATH)/bin/opt -load $(CCPATH)/lib/libMementos.$(LIBEXT) -mementos-add-global-size-global -mementos-rename-main -debug -stats
 
 # instrument all loop latches
-OPT_LATCH=opt -load $(CCPATH)/lib/libMementos.$(LIBEXT) -mementos-instrument-all-loop-latches -debug -stats
+OPT_LATCH=$(CCPATH)/bin/opt -load $(CCPATH)/lib/libMementos.$(LIBEXT) -mementos-instrument-all-loop-latches -debug -stats
 
 # instrument all function returns
-OPT_RETURN=opt -load $(CCPATH)/lib/libMementos.$(LIBEXT) -mementos-instrument-all-function-returns -debug -stats
+OPT_RETURN=$(CCPATH)/bin/opt -load $(CCPATH)/lib/libMementos.$(LIBEXT) -mementos-instrument-all-function-returns -debug -stats
