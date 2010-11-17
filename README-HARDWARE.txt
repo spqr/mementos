@@ -1,16 +1,3 @@
-Building prerequisites:
- 1. git clone llvm
- 2. update clang submodule
- 3. build and install llvm+clang
- 4. git clone mspgcc4
- 5. build and install mspgcc4
-
-Building a program (single C file) with Mementos:
- 1. Name it foo.c and drop it into this directory
- 2. make TARGET=foo
-
-===========
-
 For logging (make HARDWARE=1 LOGGING=1), we use these pins on the DL WISP 4.1:
  > P1.4
  > P2.3
