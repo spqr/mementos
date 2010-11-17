@@ -56,16 +56,13 @@ include/mementos.h:
 .c.bc: include/mementos.h
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-config.json: config.json.in
-	sed -e "s,%%LLVMBUILD%%,$(MCCPATH),g" $< > $@
-
 install: all
 	for t in $(TARGETS); do \
 		install -m 0755 $$t $(LLVMBUILD)/../mspsim/firmware/$$t; \
 	done
 
 # plain target built with clang
-$(TARGET)+plainclang: $(TARGET).c include/mementos.h config.json
+$(TARGET)+plainclang: $(TARGET).c include/mementos.h
 	$(CC) $(CFLAGS)   -o $@.bc -c $<
 	$(LLC)            -o $@.s $@.bc
 	$(MCC) $(MCFLAGS) -o $@ $@.s $(MCLIBS)
@@ -76,15 +73,15 @@ $(TARGET)+plainmspgcc: $(TARGET).c include/mementos.h
 
 
 # standalone Mementos bitcode (for linking against)
-mementos+latch.bc: mementos.c config.json
+mementos+latch.bc: mementos.c
 	$(CC) $(CFLAGS) -o $@ -DMEMENTOS_LATCH -c $<
-mementos+return.bc: mementos.c config.json
+mementos+return.bc: mementos.c
 	$(CC) $(CFLAGS) -o $@ -DMEMENTOS_RETURN -c $<
-mementos+timer+latch.bc: mementos.c config.json
+mementos+timer+latch.bc: mementos.c
 	$(CC) $(CFLAGS) -o $@ -DMEMENTOS_TIMER -DMEMENTOS_LATCH -c $<
 
 # instrument all loop latches
-$(TARGET)+latch: $(TARGET).c include/mementos.h mementos+latch.bc config.json
+$(TARGET)+latch: $(TARGET).c include/mementos.h mementos+latch.bc
 	$(CC) $(CFLAGS)   -o $@.bc -DMEMENTOS_LATCH -c $<
 	$(OPT_GSIZE)      -o $@+gsize.bc $@.bc
 	$(CCPATH)/bin/llvm-link         -o $@+gsize+mementos.bc $@+gsize.bc mementos+latch.bc
@@ -93,7 +90,7 @@ $(TARGET)+latch: $(TARGET).c include/mementos.h mementos+latch.bc config.json
 	$(MCC) $(MCFLAGS) -o $@ $@.s $(MCLIBS)
 
 # instrument all function returns
-$(TARGET)+return: $(TARGET).c include/mementos.h mementos+return.bc config.json
+$(TARGET)+return: $(TARGET).c include/mementos.h mementos+return.bc
 	$(CC) $(CFLAGS)   -o $@.bc -DMEMENTOS_RETURN -c $<
 	$(OPT_GSIZE)      -o $@+gsize.bc $@.bc
 	$(CCPATH)/bin/llvm-link         -o $@+gsize+mementos.bc $@+gsize.bc mementos+return.bc
@@ -105,7 +102,7 @@ $(TARGET)+return: $(TARGET).c include/mementos.h mementos+return.bc config.json
 # run at all (i.e., return without doing an energy check) unless the
 # 'ok_to_checkpoint' flag is set, which happens every TIMER_INTERVAL
 # (include/mementos.h) cycles.
-$(TARGET)+timer: $(TARGET).c include/mementos.h mementos+timer+latch.bc config.json
+$(TARGET)+timer: $(TARGET).c include/mementos.h mementos+timer+latch.bc
 	$(CC) $(CFLAGS)   -o $@.bc -DMEMENTOS_TIMER -DMEMENTOS_LATCH -c $<
 	$(OPT_GSIZE)      -o $@+gsize.bc $@.bc
 	$(CCPATH)/bin/llvm-link         -o $@+gsize+mementos.bc $@+gsize.bc mementos+timer+latch.bc
@@ -127,4 +124,4 @@ gdbcommands: $(TARGETS)
 
 clean:
 	$(RM) $(TARGETS) *.o samples/*.o *.bc samples/*.bc *.s samples/*.s \
-		config.json include/mementos.h logme *.gdb samples/*.gdb
+		include/mementos.h logme *.gdb samples/*.gdb

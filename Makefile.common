@@ -7,6 +7,7 @@ MCCPATH=$(HOME)/vc/myllvmmsp430/build
 MCC=$(MCCPATH)/bin/msp430-gcc
 CC=$(CCPATH)/bin/clang
 LLC=$(CCPATH)/bin/llc -march=msp430 -combiner-alias-analysis
+OPT=$(CCPATH)/bin/opt -debug -stats
 
 # chip to target (unless already defined)
 MCU ?= msp430x2131
@@ -22,12 +23,13 @@ ifeq ($(OS),Darwin)
 else
  LIBEXT=so
 endif
+MEMENTOSLIB=$(CCPATH)/lib/libMementos.$(LIBEXT)
 
 # optimization passes common to all flavors
-OPT_GSIZE=$(CCPATH)/bin/opt -load $(CCPATH)/lib/libMementos.$(LIBEXT) -mementos-add-global-size-global -mementos-rename-main -debug -stats
+OPT_GSIZE=$(OPT) -load $(MEMENTOSLIB) -mementos-add-global-size-global -mementos-rename-main
 
 # instrument all loop latches
-OPT_LATCH=$(CCPATH)/bin/opt -load $(CCPATH)/lib/libMementos.$(LIBEXT) -mementos-instrument-all-loop-latches -debug -stats
+OPT_LATCH=$(OPT) -load $(MEMENTOSLIB) -mementos-instrument-all-loop-latches
 
 # instrument all function returns
-OPT_RETURN=$(CCPATH)/bin/opt -load $(CCPATH)/lib/libMementos.$(LIBEXT) -mementos-instrument-all-function-returns -debug -stats
+OPT_RETURN=$(OPT) -load $(MEMENTOSLIB) -mementos-instrument-all-function-returns
