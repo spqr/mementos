@@ -23,7 +23,7 @@ ifeq ($(OS),Darwin)
 else
  LIBEXT=so
 endif
-MEMENTOSLIB=llvm/Debug+Asserts/libMementos.$(LIBEXT)
+MEMENTOSLIB=$(LLVM)/lib/libMementos.$(LIBEXT)
 
 # optimization passes common to all flavors
 OPT_GSIZE=$(OPT) -load $(MEMENTOSLIB) -mementos-add-global-size-global -mementos-rename-main
