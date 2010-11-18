@@ -3,9 +3,16 @@ dnl * Initialize
 dnl **************************************************************************
 AC_INIT([[[mementos]]],[[[1.0]]],[ransford@cs.umass.edu])
 
-AC_CHECK_PROGS([LLVMCONFIG], [llvm-config])
-if [[ -z "$LLVMCONFIG" ]]; then
-  AC_MSG_ERROR([llvm-config not found in your PATH; quitting.])
+AC_ARG_WITH(llvm,
+	    AS_HELP_STRING([--with-llvm=PATH],
+	    		   [specify path to LLVM]),
+	    LLVMPREFIX="$withval")
+if [[ -z "$LLVMPREFIX" ]]; then
+	AC_CHECK_PROGS([LLVMCONFIG], [llvm-config])
+	if [[ -z "$LLVMCONFIG" ]]; then
+	  AC_MSG_ERROR([llvm-config not found in your PATH; quitting.])
+	fi
+	LLVMPREFIX=`$LLVMCONFIG --prefix`
 fi
 
 dnl Identify where LLVM source tree is
