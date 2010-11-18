@@ -1,19 +1,19 @@
 .SUFFIXES: .c .o .s .bc
 
-CCPATH=$(HOME)/nb/llvm-git-mirror-install
-MCCPATH=$(HOME)/vc/myllvmmsp430/build
+LLVM = @LLVMPREFIX@
+MSPGCC = @MSPGCCPREFIX@
 
 # toolchain elements
-MCC=$(MCCPATH)/bin/msp430-gcc
-CC=$(CCPATH)/bin/clang
-LLC=$(CCPATH)/bin/llc -march=msp430 -combiner-alias-analysis
-OPT=$(CCPATH)/bin/opt -debug -stats
+MCC=$(MSPGCC)/bin/msp430-gcc
+CC=$(LLVM)/bin/clang
+LLC=$(LLVM)/bin/llc -march=msp430 -combiner-alias-analysis
+OPT=$(LLVM)/bin/opt -debug -stats
 
 # chip to target (unless already defined)
 MCU ?= msp430x2131
 
 # compiler flags
-override CFLAGS+=-I$(PWD)/include -I$(MCCPATH)/msp430/include -D__MSP430_2131__ -O0 -emit-llvm -ccc-host-triple msp430-elf
+override CFLAGS+=-I$(PWD)/include -I$(MSPGCC)/msp430/include -D__MSP430_2131__ -O0 -emit-llvm -ccc-host-triple msp430-elf
 override MCFLAGS+=-I$(PWD)/include -mmcu=$(MCU)
 
 # OS-specific options
@@ -23,7 +23,7 @@ ifeq ($(OS),Darwin)
 else
  LIBEXT=so
 endif
-MEMENTOSLIB=$(CCPATH)/lib/libMementos.$(LIBEXT)
+MEMENTOSLIB=llvm/Debug+Asserts/libMementos.$(LIBEXT)
 
 # optimization passes common to all flavors
 OPT_GSIZE=$(OPT) -load $(MEMENTOSLIB) -mementos-add-global-size-global -mementos-rename-main
