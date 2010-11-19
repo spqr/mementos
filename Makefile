@@ -1,7 +1,7 @@
 #
 ### Mementos build system.
 #
-# To build against a <program>.c (default: sense.c), run:
+# To build against a <program>.c (default: samples/crc-vanilla.c), run:
 #  make TARGET=program
 # To build with hardware support, define HARDWARE:
 #  make HARDWARE=1 [...]
@@ -11,13 +11,13 @@
 #
 
 # conditional definitions
-TARGET ?= samples/sense
+TARGET ?= samples/crc-vanilla
 
 include Makefile.common
 
 .DUMMY: all clean gdbcommands install strip
 
-ifeq ($(TARGET),sense)
+ifeq ($(TARGET),samples/sense)
  MCLIBS=-lm
 endif
 
