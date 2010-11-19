@@ -84,7 +84,7 @@ mementos+timer+latch.bc: mementos.c
 $(TARGET)+latch: $(TARGET).c include/mementos.h mementos+latch.bc
 	$(CC) $(CFLAGS)   -o $@.bc -DMEMENTOS_LATCH -c $<
 	$(OPT_GSIZE)      -o $@+gsize.bc $@.bc
-	$(CCPATH)/bin/llvm-link         -o $@+gsize+mementos.bc $@+gsize.bc mementos+latch.bc
+	$(LLVM)/bin/llvm-link         -o $@+gsize+mementos.bc $@+gsize.bc mementos+latch.bc
 	$(OPT_LATCH)      -o $@+gsize+mementos+o.bc $@+gsize+mementos.bc
 	$(LLC)            -o $@.s $@+gsize+mementos+o.bc
 	$(MCC) $(MCFLAGS) -o $@ $@.s $(MCLIBS)
@@ -93,7 +93,7 @@ $(TARGET)+latch: $(TARGET).c include/mementos.h mementos+latch.bc
 $(TARGET)+return: $(TARGET).c include/mementos.h mementos+return.bc
 	$(CC) $(CFLAGS)   -o $@.bc -DMEMENTOS_RETURN -c $<
 	$(OPT_GSIZE)      -o $@+gsize.bc $@.bc
-	$(CCPATH)/bin/llvm-link         -o $@+gsize+mementos.bc $@+gsize.bc mementos+return.bc
+	$(LLVM)/bin/llvm-link         -o $@+gsize+mementos.bc $@+gsize.bc mementos+return.bc
 	$(OPT_RETURN)     -o $@+gsize+mementos+o.bc $@+gsize+mementos.bc
 	$(LLC)            -o $@.s $@+gsize+mementos+o.bc
 	$(MCC) $(MCFLAGS) -o $@ $@.s $(MCLIBS)
@@ -105,7 +105,7 @@ $(TARGET)+return: $(TARGET).c include/mementos.h mementos+return.bc
 $(TARGET)+timer: $(TARGET).c include/mementos.h mementos+timer+latch.bc
 	$(CC) $(CFLAGS)   -o $@.bc -DMEMENTOS_TIMER -DMEMENTOS_LATCH -c $<
 	$(OPT_GSIZE)      -o $@+gsize.bc $@.bc
-	$(CCPATH)/bin/llvm-link         -o $@+gsize+mementos.bc $@+gsize.bc mementos+timer+latch.bc
+	$(LLVM)/bin/llvm-link         -o $@+gsize+mementos.bc $@+gsize.bc mementos+timer+latch.bc
 	$(OPT_LATCH)      -o $@+gsize+mementos+o.bc $@+gsize+mementos.bc
 	$(LLC)            -o $@.s $@+gsize+mementos+o.bc
 	$(MCC) $(MCFLAGS) -o $@ $@.s $(MCLIBS)
