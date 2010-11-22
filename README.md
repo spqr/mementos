@@ -71,4 +71,5 @@ XXX We'll write more here soon.
 # Caveats #
 
 Things known not to work:
- * If you have your own TimerA interrupt defined, it will clash with the one Mementos tries to introduce in the `myfoo+timer` variant.
+
+* If you have your own TimerA interrupt defined, it will clash with the one Mementos tries to introduce in the `myfoo+timer` variant.
