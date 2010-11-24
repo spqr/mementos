@@ -28,6 +28,7 @@ $ make install
 $ cd /opt/mementos/src
 $ git clone git://mspgcc4.git.sourceforge.net/gitroot/mspgcc4/mspgcc4 mspgcc4
 $ cd mspgcc4
+$ git pull git://github.com/ransford/mspgcc4.git
 $ perl buildgcc.pl
 [...]
 [make sure not to build Insight if you're on OS X]
