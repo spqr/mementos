@@ -27,6 +27,11 @@ if [[ -z "$MSPGCCPREFIX" ]]; then
 	MSPGCCPREFIX=`dirname $(which $MSPGCC)`/..
 fi
 
+AC_ARG_WITH(mspsim,
+	    AS_HELP_STRING([--with-mspsim=PATH],
+	    		   [specify path to mspsim]),
+	    MSPSIMPREFIX="$withval")
+
 dnl Verify that the source directory is valid
 AC_CONFIG_SRCDIR(["Makefile.common.in"])
 
@@ -35,6 +40,7 @@ AC_CONFIG_FILES(Makefile.common)
 
 AC_SUBST(LLVMPREFIX)
 AC_SUBST(MSPGCCPREFIX)
+AC_SUBST(MSPSIMPREFIX)
 
 dnl This must be last
 AC_OUTPUT

@@ -2,6 +2,7 @@
 
 LLVM = @LLVMPREFIX@
 MSPGCC = @MSPGCCPREFIX@
+MSPSIM = @MSPSIMPREFIX@
 
 # toolchain elements
 MCC=$(MSPGCC)/bin/msp430-gcc

@@ -56,10 +56,16 @@ include/mementos.h:
 .c.bc: include/mementos.h
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-install: all
+install: $(TARGETS)
+ifeq ($(MSPSIM),)
+	@echo "No mspsim directory defined, so nowhere to install."
+	@echo "Reconfigure --with-mspsim=/path/to/mspsim to specify" \
+		"an installation path for built programs." 1>&2
+else
 	for t in $(TARGETS); do \
-		install -m 0755 $$t $(LLVMBUILD)/../mspsim/firmware/$$t; \
+		install -m 0755 $$t $(MSPSIM)/firmware/`basename "$$t"`; \
 	done
+endif
 
 # plain target built with clang
 $(TARGET)+plainclang: $(TARGET).c include/mementos.h
