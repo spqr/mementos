@@ -38,5 +38,5 @@ void do_crc (void) {
 
 int main (void) {
     do_crc();
-    return 27; // to indicate success
+    return 29; // to indicate success
 }
