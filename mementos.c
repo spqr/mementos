@@ -583,13 +583,13 @@ int main (void) {
 #ifdef MEMENTOS_LOGGING
     __mementos_log_event(MEMENTOS_STATUS_STARTING_MAIN);
 #endif // MEMENTOS_LOGGING
-    (void)_old_main();
+    i = _old_main();
 
 #ifdef MEMENTOS_LOGGING
     __mementos_log_event(MEMENTOS_STATUS_PROGRAM_COMPLETE);
 #endif // MEMENTOS_LOGGING
 
-    return 0;
+    return i;
 }
 
 #ifdef MEMENTOS_HARDWARE
