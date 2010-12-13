@@ -34,6 +34,37 @@
 #include <stdlib.h>
 #include "rsa.h"
 
+/*
+ * generate a public key and exponent suitable for RSA encryption like this:
+ * % openssl genrsa -out foo.rsa
+ * % openssl rsa -in foo.rsa -pubout | openssl rsa -pubin -noout -text 
+ *   <will output n and e>
+*/   
+#define KEYLEN 32
+uint16_t n[KEYLEN] = {
+    0xc318, 0x5456, 0xb119, 0x5ddc, 0xa9c7, 0x9c5e, 0x089e, 0x828d,
+    0xd69e, 0xcb0d, 0xf000, 0xff1d, 0x2b9d, 0x2bed, 0xe9ca, 0x6788,
+    0x4c41, 0x804e, 0xb2ce, 0x2836, 0x71e6, 0x3bef, 0xbba7, 0x9be1,
+    0x8c8a, 0xd9c4, 0x982e, 0xf678, 0xc781, 0x303b, 0x494c, 0xcb75
+};
+uint16_t e[2] = {0x0001, 0x0001}; // 65537
+uint16_t plaintext[KEYLEN] = {
+    0x74e0, 0x9c01, 0x97b1, 0x6814, 0xa7c7, 0xb552, 0x93a5, 0xc651,
+    0xe251, 0x0530, 0x11ce, 0x3da5, 0x37f0, 0x62b5, 0x49c5, 0x32c8,
+    0x2678, 0x5131, 0x6840, 0xb819, 0x6fb3, 0x2728, 0xa273, 0x6b0d,
+    0x9338, 0x5518, 0xaf9b, 0x9c6d, 0xeeec, 0xeadb, 0xb324, 0x74ee
+};
+uint16_t ciphertext[KEYLEN];
+
+/* would be nice if we could use malloc instead of globals here */
+uint16_t _tmpglobal_ab[2*KEYLEN];
+uint16_t _tmpglobal_q[KEYLEN];
+uint16_t _tmpglobal_x[2*KEYLEN];
+uint16_t _tmpglobal_ybnt[2*KEYLEN];
+uint16_t _tmpglobal_ybit[2*KEYLEN];
+uint16_t _tmpglobal_qitybit[2*KEYLEN];
+uint16_t _tmpglobal_temp[KEYLEN];
+
 /**
  * One word addition with a carry bit
  * c_i = (a_1 + b_i + epsilon_prime) mod 0xFFFF
@@ -479,17 +510,8 @@ int mp_non_zero_words(uint16_t * e, uint16_t wordlength){
  */
 void multiply_mod_p(uint16_t * c, uint16_t * a, uint16_t * b, uint16_t * p,
         uint8_t wordlength){
-    uint16_t *ab;
-    uint16_t *q;
-
-    ab = (uint16_t *)malloc(2*wordlength);
-    q = (uint16_t *)malloc(wordlength);
-	
-    multiply_mp_elements(ab, a, b, wordlength);
-    divide_mp_elements(q, c, ab, 2*wordlength, p, wordlength);
-
-    free(ab);
-    free(q);
+    multiply_mp_elements(_tmpglobal_ab, a, b, wordlength);
+    divide_mp_elements(_tmpglobal_q, c, _tmpglobal_ab, 2*wordlength, p, wordlength);
 }
 
 /*
@@ -519,10 +541,6 @@ uint16_t divide_2_word_by_1_word(uint16_t x1, uint16_t x0, uint16_t y) {
 void divide_mp_elements(uint16_t * q, uint16_t * r, uint16_t * x_in, int n,
         uint16_t * y, int t) {
     int i, j, k;
-    uint16_t *x;
-    uint16_t *ybnt;
-    uint16_t *ybit;
-    uint16_t *qitybit;
     //For step 3.2
     //uint64_t ls, rs;
     uint16_t temp_ls[2];
@@ -533,34 +551,29 @@ void divide_mp_elements(uint16_t * q, uint16_t * r, uint16_t * x_in, int n,
     //Just for testing
     uint16_t temp;
 
-    x = (uint16_t *)malloc(n);
-    ybnt = (uint16_t *)malloc(n);
-    ybit = (uint16_t *)malloc(n);
-    qitybit = (uint16_t *)malloc(n);
-	
     //0) copy x_in to x
     for (i = 0; i < n; i++)
-        x[i] = x_in[i];
+        _tmpglobal_x[i] = x_in[i];
 	
     //1)
     for (j = 0; j <= n - t; j++) {
         q[j] = 0x0000;
     }
     //2)
-    mult_by_power_of_b(ybnt, n, y, t, n - t);
+    mult_by_power_of_b(_tmpglobal_ybnt, n, y, t, n - t);
 	
-    while (1 == compare_mp_elements(x, ybnt, (int) n)) {
+    while (1 == compare_mp_elements(_tmpglobal_x, _tmpglobal_ybnt, (int) n)) {
         q[n - t] = q[n - t] + 1;
-        subtract_mp_elements(x, x, ybnt, n);
+        subtract_mp_elements(_tmpglobal_x, _tmpglobal_x, _tmpglobal_ybnt, n);
     }
     //3)
     for (i = n - 1; i > t - 1; i--) { //<--- check index here
-        temp = x[i] - y[t - 1];
+        temp = _tmpglobal_x[i] - y[t - 1];
         //3.1)
         if (0 == temp) {
             q[i - t] = 0xFFFF; //<--- check index here
         } else {
-            q[i - t] = divide_2_word_by_1_word(x[i], x[i - 1], y[t - 1]);
+            q[i - t] = divide_2_word_by_1_word(_tmpglobal_x[i], _tmpglobal_x[i - 1], y[t - 1]);
         }
         //3.2)
         //ls = ((uint64_t) q[i - t])*((((uint64_t) y[t - 1]) << 16) + ((uint64_t) y[t - 2]));
@@ -569,9 +582,9 @@ void divide_mp_elements(uint16_t * q, uint16_t * r, uint16_t * x_in, int n,
         multiply_sp_by_mp_element(ls, q[i - t], temp_ls, 2);
 		
         //rs = (((uint64_t) x[i]) << 32) + (((uint64_t) x[i - 1]) << 16) + ((uint64_t) x[i - 2]);
-        rs[0] = x[i - 2];
-        rs[1] = x[i - 1];
-        rs[2] = x[i];
+        rs[0] = _tmpglobal_x[i - 2];
+        rs[1] = _tmpglobal_x[i - 1];
+        rs[2] = _tmpglobal_x[i];
 		
         //if((0xBCD3 != rs[2]) && (0x78FC != rs[1]) && (0x1917 != rs[0])) {
 		
@@ -582,27 +595,22 @@ void divide_mp_elements(uint16_t * q, uint16_t * r, uint16_t * x_in, int n,
             multiply_sp_by_mp_element(ls, q[i - t], temp_ls, 2);
         }
         //3.3)
-        mult_by_power_of_b(ybit, n, y, t, i - t);
-        multiply_sp_by_mp_element(qitybit, q[i - t], ybit, n);
+        mult_by_power_of_b(_tmpglobal_ybit, n, y, t, i - t);
+        multiply_sp_by_mp_element(_tmpglobal_qitybit, q[i - t], _tmpglobal_ybit, n);
         //3.3 + 3.4) Last part of 3.3 merged with 3.4 to avoid negative comparisons
-        if (0 == compare_mp_elements(x, qitybit, n)) {
-            add_mp_elements(x, x, ybit, n);
-            subtract_mp_elements(x, x, qitybit, n);
+        if (0 == compare_mp_elements(_tmpglobal_x, _tmpglobal_qitybit, n)) {
+            add_mp_elements(_tmpglobal_x, _tmpglobal_x, _tmpglobal_ybit, n);
+            subtract_mp_elements(_tmpglobal_x, _tmpglobal_x, _tmpglobal_qitybit, n);
             q[i - t] = q[i - t] - 1;
         } else {
-            subtract_mp_elements(x, x, qitybit, n);
+            subtract_mp_elements(_tmpglobal_x, _tmpglobal_x, _tmpglobal_qitybit, n);
         }
         //4
         for (k = 0; k < t; k++) {
-            r[k] = x[k];
+            r[k] = _tmpglobal_x[k];
         }
 	}
     //}
-
-    free(x);
-    free(ybnt);
-    free(ybit);
-    free(qitybit);
 	
 }
 
@@ -619,7 +627,6 @@ void divide_mp_elements(uint16_t * q, uint16_t * r, uint16_t * x_in, int n,
 void mod_exp(uint16_t * A, uint16_t * g, uint16_t * e, uint16_t e_length,
         uint16_t * p, uint16_t p_length) {
     int i;
-    uint16_t *temp = (uint16_t *)malloc(p_length * sizeof(uint16_t));
     int t = mp_bit_length(e,e_length);
 	
     set_to_zero(A, p_length);
@@ -627,37 +634,20 @@ void mod_exp(uint16_t * A, uint16_t * g, uint16_t * e, uint16_t e_length,
 	
     for (i = t; i >= 0; i--) { // Note, first decrease, then work
         //2.1 A = A*A mod p
-        multiply_mod_p(temp, A, A, p, p_length);
-        copy_mp(A, temp, p_length);
+        multiply_mod_p(_tmpglobal_temp, A, A, p, p_length);
+        copy_mp(A, _tmpglobal_temp, p_length);
         //2.2 If e_i = 1 then A = Mont(A,x_hat)
         if (1 == mp_ith_bit(e, i)) {
-            multiply_mod_p(temp, A, g, p, p_length);
-            copy_mp(A, temp, p_length);
+            multiply_mod_p(_tmpglobal_temp, A, g, p, p_length);
+            copy_mp(A, _tmpglobal_temp, p_length);
         }
     }
 	
     //3.
     //copy_mp(out,A,12); // no need to copy the result, alreade stored in A
-    free(temp);
-	
 }
 
 void test_rsa_encrypt(){
-    uint16_t n[32] = {
-        0xc318, 0x5456, 0xb119, 0x5ddc, 0xa9c7, 0x9c5e, 0x089e, 0x828d,
-        0xd69e, 0xcb0d, 0xf000, 0xff1d, 0x2b9d, 0x2bed, 0xe9ca, 0x6788,
-        0x4c41, 0x804e, 0xb2ce, 0x2836, 0x71e6, 0x3bef, 0xbba7, 0x9be1,
-        0x8c8a, 0xd9c4, 0x982e, 0xf678, 0xc781, 0x303b, 0x494c, 0xcb75
-    };
-    uint16_t e[2] = {0x0001, 0x0001}; // 65537
-    uint16_t plaintext[32]={
-        0x74eL, 0x9c01, 0x97b1, 0x6814, 0xa7c7, 0xb552, 0x93a5, 0xc651,
-        0xe251, 0x0530, 0x11ce, 0x3da5, 0x37f0, 0x62b5, 0x49c5, 0x32c8,
-        0x2678, 0x5131, 0x6840, 0xb819, 0x6fb3, 0x2728, 0xa273, 0x6b0d,
-        0x9338, 0x5518, 0xaf9b, 0x9c6d, 0xeeec, 0xeadb, 0xb324, 0x74ee
-    };
-    uint16_t ciphertext[32];
-
     mod_exp(ciphertext, plaintext, e, 1, n, 32);
 }
 
