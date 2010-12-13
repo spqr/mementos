@@ -1,3 +1,5 @@
+/* test case mostly by Andres Molina-Markham amolina AT cs umass edu */
+
 /*
  * Copyright 2010 UMass Amherst. All rights reserved.
  *
