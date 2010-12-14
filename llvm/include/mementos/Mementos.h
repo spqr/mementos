@@ -3,5 +3,6 @@
 
 #define MEMENTOS_FUNCTION_PREFIX "__mementos_"
 #define MEMENTOS_OLDMAINNAME "_old_main"
+#define MEMENTOS_MNOTP "_mnotp"
 
 #endif

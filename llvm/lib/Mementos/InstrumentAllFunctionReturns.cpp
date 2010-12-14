@@ -66,7 +66,7 @@ bool MementosInstrumentAllFunctionReturns::runOnBasicBlock (BasicBlock &BB) {
       continue;
     }
 
-    if (target.find("_mnotp") != StringRef::npos) {
+    if (target.find(MEMENTOS_MNOTP) != StringRef::npos) {
       DEBUG(outs() << "Skipping return from forced-uninstrumented function\n");
       continue;
     }
@@ -105,9 +105,9 @@ bool MementosInstrumentAllFunctionReturns::runOnLoop (Loop *loop, LPPassManager 
               " leaving this Loop unmolested.\n");
       return false;
   }
-  if (parentFunctionName.find("_mnotp") != StringRef::npos) {
-    DEBUG(outs() << "Loop's parent function has '_mnotp' in its name; not"
-        << " adding trigger points to it.\n");
+  if (parentFunctionName.find(MEMENTOS_MNOTP) != StringRef::npos) {
+    DEBUG(outs() << "Loop's parent function has '" << MEMENTOS_MNOTP
+        << "' in its name; not adding trigger points to it.\n");
     return false;
   }
 

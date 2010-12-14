@@ -50,9 +50,9 @@ bool MementosInstrumentAllLoopLatches::runOnLoop (Loop *loop,
         " leaving this Loop unmolested.\n");
     return false;
   }
-  if (parentFunctionName.find("_mnotp") != StringRef::npos) {
-    DEBUG(outs() << "Loop's parent function has '_mnotp' in its name; not"
-        << " adding trigger points to it.\n");
+  if (parentFunctionName.find(MEMENTOS_MNOTP) != StringRef::npos) {
+    DEBUG(outs() << "Loop's parent function has '" << MEMENTOS_MNOTP
+        << "' in its name; not adding trigger points to it.\n");
     return false;
   }
 
