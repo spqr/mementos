@@ -9,6 +9,8 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/raw_ostream.h"
+#include <map>
+#include <string>
 
 namespace llvm {
 
@@ -81,11 +83,14 @@ namespace llvm {
   struct MementosWarnings : public BasicBlockPass
   {
     static char ID;
+    std::map<StringRef, unsigned> ProblematicFunctions;
 
     MementosWarnings ();
     virtual bool runOnBasicBlock (BasicBlock &);
     virtual void getAnalysisUsage (AnalysisUsage &) const;
+    void print (raw_ostream &, const Module *) const;
   };
+
 }
 
 #endif // MEMENTOS_PASSES_H
