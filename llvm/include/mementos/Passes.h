@@ -45,7 +45,7 @@ namespace llvm {
     static char ID;
     static const std::string oldMainName;
 
-    MementosRenameMain();
+    MementosRenameMain ();
     virtual bool runOnFunction (Function &);
   };
 
@@ -62,7 +62,7 @@ namespace llvm {
     static char ID;
     Function *containingFunction;
 
-    MementosInstrumentAllLoopLatches();
+    MementosInstrumentAllLoopLatches ();
     virtual bool doInitialization (Loop *, LPPassManager&);
     virtual bool runOnLoop (Loop *, LPPassManager&);
   };
@@ -72,7 +72,7 @@ namespace llvm {
   {
     static char ID;
 
-    MementosInstrumentAllFunctionReturns();
+    MementosInstrumentAllFunctionReturns ();
     virtual bool doInitialization (Module &);
     virtual bool doInitialization (Function &);
     virtual bool runOnBasicBlock (BasicBlock &);
