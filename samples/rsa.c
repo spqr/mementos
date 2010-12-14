@@ -1,3 +1,5 @@
+/* test case mostly by Andres Molina-Markham amolina AT cs umass edu */
+
 /*
  * Copyright 2010 UMass Amherst. All rights reserved.
  *
@@ -21,16 +23,41 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "common.h"
+
 #include <math.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
+#include <stdlib.h>
 #include "rsa.h"
 
-#define DEBUGGING_MISC 0
-#define DEBUGGING_MODEXP 0
-#define DEBUGGING_DIV 0
+/*
+ * generate a public key and exponent suitable for RSA encryption like this:
+ * % openssl genrsa -out foo.rsa <numbits>
+ * % openssl rsa -in foo.rsa -pubout | openssl rsa -pubin -noout -text 
+ *   <will output n and e>
+*/   
+#define KEYLEN 8
+uint16_t n[KEYLEN] = {
+    0xa47e, 0xc0d2, 0xe33b, 0x7fe0, 0xfcef, 0x8083, 0x520a, 0x6ee7
+};
+uint16_t e[2] = {0x0001, 0x0001}; // 65537
+uint16_t plaintext[KEYLEN] = {
+ 0x6568, 0x6c6c, 0x2c6f, 0x6d20, 0x6d65, 0x6e65, 0x6f74, 0x2173
+};
+uint16_t ciphertext[KEYLEN];
+
+/* would be nice if we could use malloc instead of globals here */
+uint16_t _tmpglobal_ab[2*KEYLEN];
+uint16_t _tmpglobal_q[KEYLEN];
+uint16_t _tmpglobal_x[2*KEYLEN];
+uint16_t _tmpglobal_ybnt[2*KEYLEN];
+uint16_t _tmpglobal_ybit[2*KEYLEN];
+uint16_t _tmpglobal_qitybit[2*KEYLEN];
+uint16_t _tmpglobal_temp[KEYLEN];
 
 /**
  * One word addition with a carry bit
@@ -223,7 +250,8 @@ void multiply_words_2(uint16_t a, uint16_t b, uint16_t * uv) {
  * Input: a, b \in [0,p-1]
  * Output: c = a*b
  */
-void multiply_mp_elements(uint16_t * c, uint16_t * a, uint16_t * b, uint8_t wordlength) {
+void multiply_mp_elements(uint16_t * c, uint16_t * a, uint16_t * b, uint8_t
+        wordlength) {
     uint16_t UV[2];
     uint16_t temp1[2];
     uint16_t temp2[2];
@@ -444,9 +472,6 @@ int mp_bit_length(uint16_t * e, uint16_t wordlength){
         }
         i--;
     }
-	if (1 == DEBUGGING_MISC) {
-		printf("last_non_zero_word = %d\n",last_non_zero_word);
-	}
     length = 16*last_non_zero_word + bit_length(e[last_non_zero_word]);
     return length;
 }
@@ -456,9 +481,6 @@ int mp_ith_bit(uint16_t * e, int i){
     uint16_t word_bit;
 	
     word = (int) i/16;
-	if (1 == DEBUGGING_MISC) {
-		printf("word = %d\n",word);
-	}
     word_bit = ith_bit(e[word],i - word *16);
     return word_bit;
 }
@@ -480,12 +502,10 @@ int mp_non_zero_words(uint16_t * e, uint16_t wordlength){
  * Input: a, b \in [0,p-1)
  * Output: c = a * b mod p
  */
-void multiply_mod_p(uint16_t * c, uint16_t * a, uint16_t * b, uint16_t * p, uint8_t wordlength){
-    uint16_t ab[2*wordlength];
-    uint16_t q[wordlength];
-	
-    multiply_mp_elements(ab, a, b, wordlength);
-    divide_mp_elements(q, c, ab, 2*wordlength, p, wordlength);
+void multiply_mod_p(uint16_t * c, uint16_t * a, uint16_t * b, uint16_t * p,
+        uint8_t wordlength){
+    multiply_mp_elements(_tmpglobal_ab, a, b, wordlength);
+    divide_mp_elements(_tmpglobal_q, c, _tmpglobal_ab, 2*wordlength, p, wordlength);
 }
 
 /*
@@ -494,33 +514,13 @@ void multiply_mod_p(uint16_t * c, uint16_t * a, uint16_t * b, uint16_t * p, uint
 uint16_t divide_2_word_by_1_word(uint16_t x1, uint16_t x0, uint16_t y) {
     uint32_t result;
     if (0 != y) {
-        if (1 == DEBUGGING_DIV) {
-            printf("y = %X\n", y);
-            printf("x1 = %X\n", x1);
-            printf("x0 = %X\n", x0);
-        }
         //result = (uint32_t ) ((uint32_t ) x1) * (0x00010000);
         result = (((uint32_t) x1) << 16);
-        if (1 == DEBUGGING_DIV) {
-            printf("result = %X,%X\n", result >> 16, result);
-        }
         //result = result | x0;
         result = result + (uint32_t) x0;
-        if (1 == DEBUGGING_DIV) {
-            printf("result1 = %X\n", result >> 16);
-            printf("result0 = %X\n", result);
-        }
         result = (result) / ((uint32_t) y);
-        if (1 == DEBUGGING_DIV) {
-            printf("--------------------\n", result);
-            printf("result1 = %X\n", result >> 16);
-            printf("result0 = %X\n", result);
-        }
         return result;
     } else {
-        if (1 == DEBUGGING_DIV) {
-            printf("Division by zero!!!!\n");
-        }
         return 0;
     }
 	
@@ -532,12 +532,9 @@ uint16_t divide_2_word_by_1_word(uint16_t x1, uint16_t x0, uint16_t y) {
  * Output: q = (q_{n-t} . . . q_1 q_0)_b, r = (r_t . . . r_1 r_0)_b
  * such that x = qy +r, 0 \leq r < y.
  */
-void divide_mp_elements(uint16_t * q, uint16_t * r, uint16_t * x_in, int n, uint16_t * y, int t) {
+void divide_mp_elements(uint16_t * q, uint16_t * r, uint16_t * x_in, int n,
+        uint16_t * y, int t) {
     int i, j, k;
-    uint16_t x[n];
-    uint16_t ybnt[n];
-    uint16_t ybit[n];
-    uint16_t qitybit[n];
     //For step 3.2
     //uint64_t ls, rs;
     uint16_t temp_ls[2];
@@ -547,57 +544,30 @@ void divide_mp_elements(uint16_t * q, uint16_t * r, uint16_t * x_in, int n, uint
 	
     //Just for testing
     uint16_t temp;
-	
+
     //0) copy x_in to x
     for (i = 0; i < n; i++)
-        x[i] = x_in[i];
+        _tmpglobal_x[i] = x_in[i];
 	
     //1)
     for (j = 0; j <= n - t; j++) {
         q[j] = 0x0000;
     }
-    if (1 == DEBUGGING_DIV) {
-        printf("Done step 1! \n");
-    }
     //2)
-    mult_by_power_of_b(ybnt, n, y, t, n - t);
-    //print_bbn((uint8_t *) "y", y,t);
-    if (1 == DEBUGGING_DIV) {
-        print_bbn((uint8_t *) "yb^(n-t)", ybnt, n);
-        print_bbn((uint8_t *) "x", x, n);
-    }
+    mult_by_power_of_b(_tmpglobal_ybnt, n, y, t, n - t);
 	
-    while (1 == compare_mp_elements(x, ybnt, (int) n)) {
-        if (1 == DEBUGGING_DIV) {
-            printf("x > yb^(n-t)!\n");
-        }
+    while (1 == compare_mp_elements(_tmpglobal_x, _tmpglobal_ybnt, (int) n)) {
         q[n - t] = q[n - t] + 1;
-        subtract_mp_elements(x, x, ybnt, n);
-        //print_bbn((uint8_t *) "x", x,24);
-    }
-    if (1 == DEBUGGING_DIV) {
-        printf("Done step 2! \n");
+        subtract_mp_elements(_tmpglobal_x, _tmpglobal_x, _tmpglobal_ybnt, n);
     }
     //3)
     for (i = n - 1; i > t - 1; i--) { //<--- check index here
-        temp = x[i] - y[t - 1];
-        if (1 == DEBUGGING_DIV) {
-            printf("Start step 3.1! i=%d , n-1 = %d, t-1 = %d\n", i, n - 1, t - 1);
-        }
+        temp = _tmpglobal_x[i] - y[t - 1];
         //3.1)
         if (0 == temp) {
-            if (1 == DEBUGGING_DIV) {
-                printf("OK so far\n");
-            }
             q[i - t] = 0xFFFF; //<--- check index here
         } else {
-            if (1 == DEBUGGING_DIV) {
-                printf("OK so far\n");
-            }
-            q[i - t] = divide_2_word_by_1_word(x[i], x[i - 1], y[t - 1]);
-        }
-        if (1 == DEBUGGING_DIV) {
-            printf("Done step 3.1! i=%d \n", i);
+            q[i - t] = divide_2_word_by_1_word(_tmpglobal_x[i], _tmpglobal_x[i - 1], y[t - 1]);
         }
         //3.2)
         //ls = ((uint64_t) q[i - t])*((((uint64_t) y[t - 1]) << 16) + ((uint64_t) y[t - 2]));
@@ -605,17 +575,10 @@ void divide_mp_elements(uint16_t * q, uint16_t * r, uint16_t * x_in, int n, uint
         temp_ls[1] = y[t - 1];
         multiply_sp_by_mp_element(ls, q[i - t], temp_ls, 2);
 		
-        if (1 == DEBUGGING_DIV) {
-            print_bn((uint8_t *) "ls", ls, 3);
-            //printf("ls=%lX\n", (long unsigned int) ls);
-        }
         //rs = (((uint64_t) x[i]) << 32) + (((uint64_t) x[i - 1]) << 16) + ((uint64_t) x[i - 2]);
-        rs[0] = x[i - 2];
-        rs[1] = x[i - 1];
-        rs[2] = x[i];
-        if (1 == DEBUGGING_DIV) {
-            print_bn((uint8_t *) "rs", rs, 3);
-        }
+        rs[0] = _tmpglobal_x[i - 2];
+        rs[1] = _tmpglobal_x[i - 1];
+        rs[2] = _tmpglobal_x[i];
 		
         //if((0xBCD3 != rs[2]) && (0x78FC != rs[1]) && (0x1917 != rs[0])) {
 		
@@ -624,42 +587,21 @@ void divide_mp_elements(uint16_t * q, uint16_t * r, uint16_t * x_in, int n, uint
             q[i - t] = q[i - t] - 1;
             //ls = ((uint64_t) q[i - t])*((((uint64_t) y[t - 1]) << 16)+ ((uint64_t) y[t - 2]));
             multiply_sp_by_mp_element(ls, q[i - t], temp_ls, 2);
-			
-            if (1 == DEBUGGING_DIV) {
-                print_bn((uint8_t *) "wls", ls, 3);
-                //printf("ls=%lX\n", (long unsigned int) ls);
-            }
-            if (1 == DEBUGGING_DIV) {
-                print_bn((uint8_t *) "wrs", rs, 3);
-                //printf("ls=%lX\n", (long unsigned int) ls);
-            }
-        }
-        if (1 == DEBUGGING_DIV) {
-            printf("Done step 3.2! i=%d \n", i);
         }
         //3.3)
-        mult_by_power_of_b(ybit, n, y, t, i - t);
-        multiply_sp_by_mp_element(qitybit, q[i - t], ybit, n);
-        if (1 == DEBUGGING_DIV) {
-            printf("Done step 3.3! i=%d \n", i);
-        }
+        mult_by_power_of_b(_tmpglobal_ybit, n, y, t, i - t);
+        multiply_sp_by_mp_element(_tmpglobal_qitybit, q[i - t], _tmpglobal_ybit, n);
         //3.3 + 3.4) Last part of 3.3 merged with 3.4 to avoid negative comparisons
-        if (0 == compare_mp_elements(x, qitybit, n)) {
-            add_mp_elements(x, x, ybit, n);
-            subtract_mp_elements(x, x, qitybit, n);
+        if (0 == compare_mp_elements(_tmpglobal_x, _tmpglobal_qitybit, n)) {
+            add_mp_elements(_tmpglobal_x, _tmpglobal_x, _tmpglobal_ybit, n);
+            subtract_mp_elements(_tmpglobal_x, _tmpglobal_x, _tmpglobal_qitybit, n);
             q[i - t] = q[i - t] - 1;
         } else {
-            subtract_mp_elements(x, x, qitybit, n);
-        }
-        if (1 == DEBUGGING_DIV) {
-            printf("Done step 3.4! i=%d \n", i);
+            subtract_mp_elements(_tmpglobal_x, _tmpglobal_x, _tmpglobal_qitybit, n);
         }
         //4
         for (k = 0; k < t; k++) {
-            r[k] = x[k];
-        }
-        if (1 == DEBUGGING_DIV) {
-            printf("End of main loop\n");
+            r[k] = _tmpglobal_x[k];
         }
 	}
     //}
@@ -676,68 +618,31 @@ void divide_mp_elements(uint16_t * q, uint16_t * r, uint16_t * x_in, int n, uint
  * @param e_legth the wordlength of the multi-precission exponent
  */
 
-void mod_exp(uint16_t * A, uint16_t * g, uint16_t * e, uint16_t e_length, uint16_t * p, uint16_t p_length) {
-    uint16_t temp[p_length];
+void mod_exp(uint16_t * A, uint16_t * g, uint16_t * e, uint16_t e_length,
+        uint16_t * p, uint16_t p_length) {
     int i;
     int t = mp_bit_length(e,e_length);
 	
-    //1.
-	if (1 == DEBUGGING_MODEXP) {
-		printf("1.\n");
-	}
     set_to_zero(A, p_length);
     A[0] = 1;
-	if (1 == DEBUGGING_MODEXP) {
-		print_bn((uint8_t *) "A", A, p_length);
-		print_bn((uint8_t *) "g", g, p_length);
-	}
-    //2.
 	
     for (i = t; i >= 0; i--) { // Note, first decrease, then work
-		if (1 == DEBUGGING_MODEXP) {
-			printf("exp i: %d\n", i);
-		}
         //2.1 A = A*A mod p
-        multiply_mod_p(temp, A, A, p, p_length);
-		if (1 == DEBUGGING_MODEXP) {
-			print_bn((uint8_t *) "A*A mod p", temp, p_length);
-		}
-        copy_mp(A, temp, p_length);
+        multiply_mod_p(_tmpglobal_temp, A, A, p, p_length);
+        copy_mp(A, _tmpglobal_temp, p_length);
         //2.2 If e_i = 1 then A = Mont(A,x_hat)
         if (1 == mp_ith_bit(e, i)) {
-			if (1 == DEBUGGING_MODEXP) {
-				printf("%d-bit = 1\n", i);
-			}
-            multiply_mod_p(temp, A, g, p, p_length);
-            if (1 == DEBUGGING_MODEXP) {
-				print_bn((uint8_t *) "A*g", temp, p_length);
-			}
-            copy_mp(A, temp, p_length);
+            multiply_mod_p(_tmpglobal_temp, A, g, p, p_length);
+            copy_mp(A, _tmpglobal_temp, p_length);
         }
     }
 	
     //3.
     //copy_mp(out,A,12); // no need to copy the result, alreade stored in A
-	
 }
 
 void test_rsa_encrypt(){
-    uint16_t n[32] = {
-        0xc318, 0x5456, 0xb119, 0x5ddc, 0xa9c7, 0x9c5e, 0x089e, 0x828d,
-        0xd69e, 0xcb0d, 0xf000, 0xff1d, 0x2b9d, 0x2bed, 0xe9ca, 0x6788,
-        0x4c41, 0x804e, 0xb2ce, 0x2836, 0x71e6, 0x3bef, 0xbba7, 0x9be1,
-        0x8c8a, 0xd9c4, 0x982e, 0xf678, 0xc781, 0x303b, 0x494c, 0xcb75
-    };
-    uint16_t e[2] = {0x0001, 0x0001}; // 65537
-    uint16_t plaintext[32]={
-        0x74eL, 0x9c01, 0x97b1, 0x6814, 0xa7c7, 0xb552, 0x93a5, 0xc651,
-        0xe251, 0x0530, 0x11ce, 0x3da5, 0x37f0, 0x62b5, 0x49c5, 0x32c8,
-        0x2678, 0x5131, 0x6840, 0xb819, 0x6fb3, 0x2728, 0xa273, 0x6b0d,
-        0x9338, 0x5518, 0xaf9b, 0x9c6d, 0xeeec, 0xeadb, 0xb324, 0x74ee
-    };
-    uint16_t ciphertext[32];
-
-    mod_exp(ciphertext, plaintext, e, 1, n, 32);
+    mod_exp(ciphertext, plaintext, e, 1, n, KEYLEN);
 }
 
 
