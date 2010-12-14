@@ -77,6 +77,15 @@ namespace llvm {
     virtual bool doInitialization (Function &);
     virtual bool runOnBasicBlock (BasicBlock &);
   };
+
+  struct MementosWarnings : public BasicBlockPass
+  {
+    static char ID;
+
+    MementosWarnings ();
+    virtual bool runOnBasicBlock (BasicBlock &);
+    virtual void getAnalysisUsage (AnalysisUsage &) const;
+  };
 }
 
 #endif // MEMENTOS_PASSES_H
