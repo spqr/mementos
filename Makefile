@@ -44,7 +44,7 @@ ifeq ($(TIMERINT),)
 endif
 
 # which flavors to build
-FLAVORS=plainclang plainmspgcc latch return timer
+FLAVORS=plainclang plainmspgcc latch return timer oracle
 TARGETS=$(foreach flavor,$(FLAVORS),$(TARGET)+$(flavor))
 
 all: $(TARGETS)
@@ -85,6 +85,8 @@ mementos+return.bc: mementos.c
 	$(CC) $(CFLAGS) -o $@ -DMEMENTOS_RETURN -c $<
 mementos+timer+latch.bc: mementos.c
 	$(CC) $(CFLAGS) -o $@ -DMEMENTOS_TIMER -DMEMENTOS_LATCH -c $<
+mementos+oracle.bc: mementos.c
+	$(CC) $(CFLAGS) -o $@ -DMEMENTOS_ORACLE -c $<
 
 # instrument all loop latches
 $(TARGET)+latch: $(TARGET).c include/mementos.h mementos+latch.bc
@@ -114,6 +116,14 @@ $(TARGET)+timer: $(TARGET).c include/mementos.h mementos+timer+latch.bc
 	$(LLVM)/bin/llvm-link         -o $@+gsize+mementos.bc $@+gsize.bc mementos+timer+latch.bc
 	$(OPT_LATCH)      -o $@+gsize+mementos+o.bc $@+gsize+mementos.bc
 	$(LLC)            -o $@.s $@+gsize+mementos+o.bc
+	$(MCC) $(MCFLAGS) -o $@ $@.s $(MCLIBS)
+
+# link against mementos but don't instrument code
+$(TARGET)+oracle: $(TARGET).c include/mementos.h mementos+oracle.bc
+	$(CC) $(CFLAGS)   -o $@.bc -DMEMENTOS_ORACLE -c $<
+	$(OPT_GSIZE)      -o $@+gsize.bc $@.bc
+	$(LLVM)/bin/llvm-link -o $@+gsize+mementos.bc $@+gsize.bc mementos+oracle.bc
+	$(LLC)            -o $@.s $@+gsize+mementos.bc
 	$(MCC) $(MCFLAGS) -o $@ $@.s $(MCLIBS)
 
 logme: logme.c

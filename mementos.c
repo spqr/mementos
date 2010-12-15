@@ -22,6 +22,7 @@ void __mementos_checkpoint (void) {
                   :"=m"(interrupts_enabled));
     */
 
+#ifndef MEMENTOS_ORACLE // always checkpoint when called in oracle mode
 #ifdef MEMENTOS_TIMER
     /* early exit if not ok to checkpoint */
     if (!ok_to_checkpoint) {
@@ -45,6 +46,7 @@ void __mementos_checkpoint (void) {
 #endif // MEMENTOS_TIMER
         asm volatile ("RET"); // would 'return', but that triggers a bug XXX
     }
+#endif // MEMENTOS_ORACLE
 #ifdef MEMENTOS_LOGGING
     __mementos_log_event(MEMENTOS_STATUS_STARTING_CHECKPOINT);
 #endif // MEMENTOS_LOGGING
