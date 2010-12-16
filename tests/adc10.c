@@ -4,6 +4,7 @@
 #define VSENSE_POWER BIT3
 
 void __stop_progExec__ (void) {
+    _BIS_SR(CPUOFF);
 }
 
 unsigned int __mementos_voltage_check (void) {
@@ -37,7 +38,10 @@ int main (void) {
     for (i = 0; i < 50; ++i);
     P1OUT &= ~BIT4;
 
+    /* time between two GPIO spikes is the time for __mementos_voltage_check */
     (void)__mementos_voltage_check();
+    /* spike width is the amount of time in __mementos_voltage_check due to
+     * counting to 50 */
 
     P1OUT |= BIT4;
     for (i = 0; i < 50; ++i);
