@@ -1,8 +1,5 @@
 #include <msp430x21x2.h>
-
-void __stop_progExec__ (void) {
-    _BIS_SR(CPUOFF);
-}
+#include "test.h"
 
 void flasherase (void) {
     FCTL3 = FWKEY;

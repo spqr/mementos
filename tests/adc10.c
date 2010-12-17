@@ -1,11 +1,8 @@
 #include <msp430x21x2.h>
+#include "test.h"
 
 #define INCH_VSENSE_IN INCH_6
 #define VSENSE_POWER BIT3
-
-void __stop_progExec__ (void) {
-    _BIS_SR(CPUOFF);
-}
 
 unsigned int __mementos_voltage_check (void) {
     unsigned char i = 0;
