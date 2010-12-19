@@ -345,35 +345,12 @@ unsigned int __mementos_locate_next_bundle (unsigned int sp /* hack */) {
 
     /* where does the currently active bundle start? */
     baseaddr = __mementos_find_active_bundle();
-
     if (baseaddr == 0xFFFFu) {
-        /* no bundle is active... so either both segments are empty or both
-         * segments are marked for erasure.  it's not possible to have a segment
-         * marked for erasure and an empty segment, since a segment doesn't get
-         * marked for erasure until the other segment has at least one bundle
-         * successfully written to it. */
-        if (__mementos_segment_is_empty(FIRST_BUNDLE_SEG)
-                && __mementos_segment_is_empty(SECOND_BUNDLE_SEG)) {
-            // both segments are empty; start writing to the first one
+        if (__mementos_segment_is_empty(FIRST_BUNDLE_SEG))
             return FIRST_BUNDLE_SEG;
-        }
-
-        /*
-        if (__mementos_segment_is_empty(SECOND_BUNDLE_SEG)) {
+        else if (__mementos_segment_is_empty(SECOND_BUNDLE_SEG))
             return SECOND_BUNDLE_SEG;
-        }
-        */
 
-        if (__mementos_segment_marked_erase(FIRST_BUNDLE_SEG)
-                && __mementos_segment_marked_erase(SECOND_BUNDLE_SEG)) {
-            /* both segments are marked for erasure; erase the first one and
-             * then return indicating it's OK to write there.  if that erasure
-             * fails, then we'll be back where we started from. */
-            __mementos_erase_segment(FIRST_BUNDLE_SEG);
-            return FIRST_BUNDLE_SEG;
-        }
-
-        // shouldn't get here, but if we do, err
         return 0xFFFFu;
     }
 
@@ -559,6 +536,14 @@ int main (void) {
 #ifdef MEMENTOS_LOGGING
     __mementos_log_event(MEMENTOS_STATUS_HELLO);
 #endif // MEMENTOS_LOGGING
+
+    /* super-quick check at boot time; may result in the erasure of at most one
+     * flash segment */
+    if (__mementos_segment_marked_erase(FIRST_BUNDLE_SEG)) {
+        __mementos_erase_segment(FIRST_BUNDLE_SEG);
+    } else if (__mementos_segment_marked_erase(SECOND_BUNDLE_SEG)) {
+        __mementos_erase_segment(SECOND_BUNDLE_SEG);
+    }
 
     i = __mementos_find_active_bundle();
     if ((i >= FIRST_BUNDLE_SEG) && (i < SECOND_BUNDLE_SEG + MAINMEM_SEGSIZE)) {
