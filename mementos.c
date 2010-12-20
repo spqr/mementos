@@ -373,29 +373,27 @@ unsigned int __mementos_locate_next_bundle (unsigned int sp /* hack */) {
         if (next > (SECOND_BUNDLE_SEG + MAINMEM_SEGSIZE)) { // out of bounds
             /* next bundle should go in whichever segment doesn't contain the
              * current bundle */
-            if (baseaddr >= SECOND_BUNDLE_SEG) {
-                // write to first segment; when done erase the second segment
-                next = FIRST_BUNDLE_SEG;
-                __mementos_mark_segment_erase(SECOND_BUNDLE_SEG);
-            } else {
-                // write to second segment; when done erase the first segment
-                next = SECOND_BUNDLE_SEG;
-                __mementos_mark_segment_erase(FIRST_BUNDLE_SEG);
+            next = (baseaddr >= SECOND_BUNDLE_SEG)
+                ? FIRST_BUNDLE_SEG
+                : SECOND_BUNDLE_SEG;
+            if (!__mementos_segment_is_empty(next)) {
+                if (!__mementos_segment_marked_erase(next))
+                    __mementos_mark_segment_erase(next);
+                /* the next location isn't empty, but it's marked for erasure,
+                 * which means a call to locate_bundle after erasing it will
+                 * correctly locate the bundle there.  but since it's not
+                 * immediately usable we must report as much. */
+                return 0xFFFFu;
             }
-            break;
         }
     }
 
-    if (next < SECOND_BUNDLE_SEG) {
-        // bundle starts in first segment
+    if (next < SECOND_BUNDLE_SEG) { // bundle starts in first segment
         if ((next + size) > SECOND_BUNDLE_SEG) {
             // overlaps with second segment, promote it to there
             if (__mementos_segment_is_empty(SECOND_BUNDLE_SEG)) {
                 next = SECOND_BUNDLE_SEG;
-                __mementos_mark_segment_erase(FIRST_BUNDLE_SEG);
             } else {
-                // can't fit bundle in first segment, so our only option is to
-                // erase the second segment
                 __mementos_mark_segment_erase(SECOND_BUNDLE_SEG);
                 return 0xFFFFu;
             }
@@ -405,10 +403,7 @@ unsigned int __mementos_locate_next_bundle (unsigned int sp /* hack */) {
             // overruns end of second segment, put bundle in first segment
             if (__mementos_segment_is_empty(FIRST_BUNDLE_SEG)) {
                 next = FIRST_BUNDLE_SEG;
-                __mementos_mark_segment_erase(SECOND_BUNDLE_SEG);
             } else {
-                // can't fit bundle in second segment, so our only option is to
-                // erase the first segment
                 __mementos_mark_segment_erase(FIRST_BUNDLE_SEG);
                 return 0xFFFFu;
             }
