@@ -461,24 +461,28 @@ unsigned int __mementos_find_active_bundle (void) {
                  * bundle after an abortive bundle (if we did, we wouldn't be
                  * able to find it using our walking technique), this segment is
                  * no longer useful, so we mark it for erasure */
+
+                /* if the segment starts off with a botched checkpoint, the
+                 * whole thing's shot and we should erase it when we get a
+                 * chance */
                 if (bun == SECOND_BUNDLE_SEG)
                     __mementos_mark_segment_erase(SECOND_BUNDLE_SEG);
+                /* else consider the previous bundle the active one (candidate
+                 * points at the most recently validated bundle) */
+
                 break;
             }
             bun = endloc + 2 /* skip over 2-byte magic number */;
         } while (bun < (SECOND_BUNDLE_SEG + MAINMEM_SEGSIZE));
 #ifdef MEMENTOS_LOGGING
-    __mementos_log_event(MEMENTOS_STATUS_DONE_FINDING_BUNDLE);
+        __mementos_log_event(MEMENTOS_STATUS_DONE_FINDING_BUNDLE);
 #endif // MEMENTOS_LOGGING
         return candidate;
     }
-    // if we reach this point, the first bundle may contain an active bundle
 
+    // if we reach this point, the first bundle may contain an active bundle
     do {
         if (MEMREF(bun) == 0xFFFFu) {
-            /* found a blank where a bundle header should be, so we've hit
-             * the end of bundles in this segment; return the current position
-             */
 #ifdef MEMENTOS_LOGGING
             __mementos_log_event(MEMENTOS_STATUS_DONE_FINDING_BUNDLE);
 #endif // MEMENTOS_LOGGING
@@ -487,10 +491,8 @@ unsigned int __mementos_find_active_bundle (void) {
         endloc = bun + (MEMREF(bun) & 0xff) + (MEMREF(bun) >> 8) + 2 + 30;
         magic = MEMREF(endloc);
         if (magic == MEMENTOS_MAGIC_NUMBER) {
-            /* found a valid bundle */
             candidate = bun;
         } else {
-            /* see above comment */
             if (bun == FIRST_BUNDLE_SEG) // true on first iteration
                 __mementos_mark_segment_erase(FIRST_BUNDLE_SEG);
             break;
