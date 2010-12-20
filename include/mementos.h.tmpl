@@ -1,7 +1,16 @@
 #ifndef __NEWMEM_H__
 #define __NEWMEM_H__
 
-#include <msp430x21x2.h>
+#ifdef __MSP430_2131__
+# include <msp430x21x1.h>
+#elif defined(__MSP430_2132__)
+# include <msp430x21x2.h>
+#elif defined(__MSP430_1611__)
+# include <msp430x14x.h>
+#else
+#error Unsupported hardware.
+#endif
+
 #ifdef MEMENTOS_HARDWARE
 # include "pinDefWISP4.1DL.h"
 #endif // MEMENTOS_HARDWARE
