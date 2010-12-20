@@ -47,9 +47,7 @@ void __mementos_checkpoint (void) {
         asm volatile ("RET"); // would 'return', but that triggers a bug XXX
     }
 #endif // MEMENTOS_ORACLE
-#ifdef MEMENTOS_LOGGING
     __mementos_log_event(MEMENTOS_STATUS_STARTING_CHECKPOINT);
-#endif // MEMENTOS_LOGGING
 
     // push all the registers onto the stack
     asm volatile ("PUSH 2(R1)\n\t" // PC will appear at 28(R1)
@@ -155,10 +153,7 @@ void __mementos_checkpoint (void) {
     }
     // write the magic number
     MEMREF(baseaddr + j) = MEMENTOS_MAGIC_NUMBER;
-
-#ifdef MEMENTOS_LOGGING
     __mementos_log_event(MEMENTOS_STATUS_COMPLETED_CHECKPOINT);
-#endif // MEMENTOS_LOGGING
 
     /* success!  if this was the first in a segment, mark the other segment for
      * erasure because we've superseded all its checkpoints with this one */
@@ -191,9 +186,7 @@ void __mementos_restore (unsigned int b) {
      * the size (in bytes) of the data-segment portion of the bundle. */
     baseaddr = b; // XXX
 
-#ifdef MEMENTOS_LOGGING
     __mementos_log_event(MEMENTOS_STATUS_STARTING_RESTORATION);
-#endif // MEMENTOS_LOGGING
 
     /*
     // disable interrupts -- they wouldn't be helpful here
@@ -431,9 +424,7 @@ unsigned int __mementos_find_active_bundle (void) {
     unsigned int bun = FIRST_BUNDLE_SEG;
     unsigned int magic, endloc;
     unsigned int candidate = 0xFFFFu; // current candidate for active bundle
-#ifdef MEMENTOS_LOGGING
     __mementos_log_event(MEMENTOS_STATUS_FINDING_BUNDLE);
-#endif // MEMENTOS_LOGGING
     if (__mementos_segment_is_empty(FIRST_BUNDLE_SEG) ||
             __mementos_segment_marked_erase(FIRST_BUNDLE_SEG)) {
         // FIRST_BUNDLE_SEG does not contain an active bundle, so look in 2nd
@@ -446,9 +437,7 @@ unsigned int __mementos_find_active_bundle (void) {
                 /* found a blank where a bundle header should be, so we've hit
                  * the end of bundles in this segment; return the current
                  * position */
-#ifdef MEMENTOS_LOGGING
                 __mementos_log_event(MEMENTOS_STATUS_DONE_FINDING_BUNDLE);
-#endif // MEMENTOS_LOGGING
                 return candidate;
             }
             endloc = bun + (MEMREF(bun) & 0xff) + (MEMREF(bun) >> 8) + 2 + 30;
@@ -474,18 +463,14 @@ unsigned int __mementos_find_active_bundle (void) {
             }
             bun = endloc + 2 /* skip over 2-byte magic number */;
         } while (bun < (SECOND_BUNDLE_SEG + MAINMEM_SEGSIZE));
-#ifdef MEMENTOS_LOGGING
         __mementos_log_event(MEMENTOS_STATUS_DONE_FINDING_BUNDLE);
-#endif // MEMENTOS_LOGGING
         return candidate;
     }
 
     // if we reach this point, the first bundle may contain an active bundle
     do {
         if (MEMREF(bun) == 0xFFFFu) {
-#ifdef MEMENTOS_LOGGING
             __mementos_log_event(MEMENTOS_STATUS_DONE_FINDING_BUNDLE);
-#endif // MEMENTOS_LOGGING
             return candidate;
         }
         endloc = bun + (MEMREF(bun) & 0xff) + (MEMREF(bun) >> 8) + 2 + 30;
@@ -499,9 +484,7 @@ unsigned int __mementos_find_active_bundle (void) {
         }
         bun = endloc + 2 /* skip over 2-byte magic number */;
     } while (bun < FIRST_BUNDLE_SEG + MAINMEM_SEGSIZE);
-#ifdef MEMENTOS_LOGGING
     __mementos_log_event(MEMENTOS_STATUS_DONE_FINDING_BUNDLE);
-#endif // MEMENTOS_LOGGING
     return candidate;
 }
 
@@ -535,9 +518,7 @@ int main (void) {
     P3DIR |= BIT0 | BIT4 | BIT5; // P3.{0,4,5}
 #endif // MEMENTOS_HARDWARE && MEMENTOS_LOGGING
 
-#ifdef MEMENTOS_LOGGING
     __mementos_log_event(MEMENTOS_STATUS_HELLO);
-#endif // MEMENTOS_LOGGING
 
     /* super-quick check at boot time; may result in the erasure of at most one
      * flash segment */
@@ -569,14 +550,9 @@ int main (void) {
     }
 
     /* invoke the original program */
-#ifdef MEMENTOS_LOGGING
     __mementos_log_event(MEMENTOS_STATUS_STARTING_MAIN);
-#endif // MEMENTOS_LOGGING
     i = _old_main();
-
-#ifdef MEMENTOS_LOGGING
     __mementos_log_event(MEMENTOS_STATUS_PROGRAM_COMPLETE);
-#endif // MEMENTOS_LOGGING
 
     return i;
 }
@@ -592,9 +568,7 @@ int main (void) {
 unsigned int __mementos_voltage_check (void) {
     unsigned char i = 0;
 
-#ifdef MEMENTOS_LOGGING
     __mementos_log_event(MEMENTOS_STATUS_CHECKING_VOLTAGE);
-#endif // MEMENTOS_LOGGING
 
     /* set up the ADC (a la blinky.c) */
     ADC10CTL0 &= ~ENC;

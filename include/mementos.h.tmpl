@@ -74,6 +74,8 @@ unsigned int __mementos_find_active_bundle (void);
 # define MEMENTOS_STATUS_CHECKING_VOLTAGE 0xC
 # define MEMENTOS_STATUS_PROGRAM_COMPLETE 0xE
 void __mementos_log_event (unsigned char);
+#else
+# define __mementos_log_event(x)
 #endif // MEMENTOS_LOGGING
 
 #ifdef MEMENTOS_HARDWARE
