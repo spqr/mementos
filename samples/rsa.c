@@ -40,14 +40,10 @@
  * % openssl rsa -in foo.rsa -pubout | openssl rsa -pubin -noout -text 
  *   <will output n and e>
 */   
-#define KEYLEN 8
-uint16_t n[KEYLEN] = {
-    0xa47e, 0xc0d2, 0xe33b, 0x7fe0, 0xfcef, 0x8083, 0x520a, 0x6ee7
-};
-uint16_t e[2] = {0x0001, 0x0001}; // 65537
-uint16_t plaintext[KEYLEN] = {
- 0x6568, 0x6c6c, 0x2c6f, 0x6d20, 0x6d65, 0x6e65, 0x6f74, 0x2173
-};
+#define KEYLEN 4
+uint16_t n[KEYLEN];
+uint16_t e[2];
+uint16_t plaintext[KEYLEN];
 uint16_t ciphertext[KEYLEN];
 
 /* would be nice if we could use malloc instead of globals here */
@@ -647,6 +643,15 @@ void test_rsa_encrypt(){
 
 
 int main (void) {
+    /* see above comment about generating these */
+    n[0] = 0xab78; n[1] = 0xafba; n[2] = 0x88e7; n[3] = 0x496d;
+    e[0] = 0x0001; e[1] = 0x0001; // e = 65537
+
+    plaintext[0] = 0x4d65; // Me
+    plaintext[1] = 0x6d65; // me
+    plaintext[2] = 0x6e74; // nt
+    plaintext[3] = 0x6f73; // os
+
     test_rsa_encrypt();
     asm volatile ("NOP");
     return 11;
