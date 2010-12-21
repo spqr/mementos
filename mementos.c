@@ -546,15 +546,13 @@ int main (void) {
         if (i < SECOND_BUNDLE_SEG) {
             /* bundle is in first segment, so erase the second segment if
              * necessary */
-            if (__mementos_segment_marked_erase(SECOND_BUNDLE_SEG)) {
+            if (!__mementos_segment_is_empty(SECOND_BUNDLE_SEG))
                 __mementos_erase_segment(SECOND_BUNDLE_SEG);
-            }
         } else {
             /* bundle is in second segment, so erase the first segment if
              * necessary */
-            if (__mementos_segment_marked_erase(FIRST_BUNDLE_SEG)) {
+            if (!__mementos_segment_is_empty(FIRST_BUNDLE_SEG))
                 __mementos_erase_segment(FIRST_BUNDLE_SEG);
-            }
         }
 
         __mementos_restore(i);
