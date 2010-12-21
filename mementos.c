@@ -218,30 +218,37 @@ void __mementos_restore (unsigned int b) {
         asm volatile("MOV @R7, 0(R8)");
     }
 
-    /* restore the data segment without trampling on our own globals.  C
-     * pseudocode (broken!):
-     *   i = tmpsize; // stack size, set in previous loop
-     *   tmpsize = (MEMREF(baseaddr) & 0x00ff); // data segment size
-     *   for (j = 0; j < tmpsize; j += 2) {
-     *       MEMREF(STARTOFDATA + j) =      // from 0x200 up to 0x200+tmpsize
-     *           MEMREF(baseaddr + 30 + i); // skip stack (i bytes) & regs (30B)
-     *   }
+    /* restore the data segment without trampling on our own globals.
+     * pseudocode:
+     *
+     * baseaddr = beginning of checkpoint bundle
+     * stacksize = size of stack portion of checkpoint
+     * regfilesize = size of register portion of checkpoint (30 bytes)
+     * headersize = size of bundle header (2 bytes)
+     *
+     * for (i = 0; i < globalsize; i += 2) {
+     *     memory[STARTOFDATA + i] = 
+     *         memory[baseaddr + stacksize + regfilesize + headersize + i]
+     * }
      */
-    asm volatile("MOV &%0, R7" ::"m"(tmpsize));  // R7(i) = tmpsize
-    asm volatile("MOV &%0, R6" ::"m"(baseaddr)); // R9 = baseaddr
-    asm volatile("MOV @R6, R8\n\t"               // R8(tmpsize) = (MEMREF(baseaddr)
-                 "AND #255, R8");                //       & 0x00FF)
-    asm volatile("CLR.W R9");                    // j = 0
+    asm volatile("MOV &%0, R7" ::"m"(tmpsize));  // R7(stacksize) = tmpsize
+    asm volatile("MOV &%0, R6" ::"m"(baseaddr)); // R6(baseaddr)  = baseaddr
+    asm volatile("MOV @R6, R8\n\t"               // R8(globalsize) =
+                 "AND #255, R8");                //   MEMREF(baseaddr) & 0x00FF
+    asm volatile("CLR.W R9");                    // R9(i) = 0 // induction var
+
     asm volatile("rdloop:");                     // will jump back up here
-    asm volatile("CMP R7, R9\n\t"                // if (j >= tmpsize)
-                 "JC afterrd");                  //   terminate
-    asm volatile("MOV R7, R10\n\t"               // R10 = R7(i)
-                 "ADD R6, R10\n\t"               //       + R9(baseaddr)
-                 "ADD #30, R10");                //       + 30
-    asm volatile("MOV @R10, "                    // MEMREF(STARTOFDATA+j) =
+    asm volatile("CMP R8, R9\n\t"                // if (i(R9) >= globalsize(R8))
+                 "JC afterrd");                  //   <stop looping>
+    asm volatile("MOV R6, R10\n\t"               // R10 = baseaddr(R6)
+                 "ADD #32, R10\n\t"              //   + 32 // skip regs, header,
+                 "ADD R7, R10\n\t"               //   + stacksize(R7) // stack,
+                 "ADD R9, R10");                 //   + i(R9)
+    asm volatile("MOV @R10, "                    // MEMREF(STARTOFDATA+i(R9)) =
             xstr(STARTOFDATA) "(R9)");           //        MEMREF(R10)
-    asm volatile("INCD R9");                     // j += 2
+    asm volatile("INCD R9");                     // i += 2
     asm volatile("JMP rdloop");                  // to beginning of loop
+
     asm volatile("afterrd:");                    // jump here when done
 
     /* set baseaddr back to whatever it was */
@@ -458,6 +465,11 @@ unsigned int __mementos_find_active_bundle (void) {
             }
             bun = endloc + 2 /* skip over 2-byte magic number */;
         } while (bun < (SECOND_BUNDLE_SEG + MAINMEM_SEGSIZE));
+
+        if (candidate != 0xFFFFu &&
+            !__mementos_segment_is_empty(FIRST_BUNDLE_SEG))
+            __mementos_mark_segment_erase(FIRST_BUNDLE_SEG);
+
         __mementos_log_event(MEMENTOS_STATUS_DONE_FINDING_BUNDLE);
         return candidate;
     }
@@ -479,6 +491,11 @@ unsigned int __mementos_find_active_bundle (void) {
         }
         bun = endloc + 2 /* skip over 2-byte magic number */;
     } while (bun < FIRST_BUNDLE_SEG + MAINMEM_SEGSIZE);
+
+        if (candidate != 0xFFFFu &&
+            !__mementos_segment_is_empty(SECOND_BUNDLE_SEG))
+            __mementos_mark_segment_erase(SECOND_BUNDLE_SEG);
+
     __mementos_log_event(MEMENTOS_STATUS_DONE_FINDING_BUNDLE);
     return candidate;
 }
