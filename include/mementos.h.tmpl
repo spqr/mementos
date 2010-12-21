@@ -101,13 +101,15 @@ sfrw(VOLTAGE_CHECK, VOLTAGE_CHECK_);
 #define MEMENTOS_MAGIC_NUMBER 0xBEADu
 
 /* horrible cheating hackery */
-#define STARTOFDATA 0x0200
 #ifdef __MSP430_2131__
 #define TOPOFSTACK 0x0300
+#define STARTOFDATA 0x0200
 #elif defined(__MSP430_2132__)
 #define TOPOFSTACK 0x0400
+#define STARTOFDATA 0x0200
 #elif defined(__MSP430_1611__)
-#define TOPOFSTACK 0x0A00
+#define TOPOFSTACK 0x3900
+#define STARTOFDATA 0x1100
 #endif
 
 #ifdef MEMENTOS_TIMER
