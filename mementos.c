@@ -594,6 +594,8 @@ unsigned int __mementos_voltage_check (void) {
     ADC10CTL0 = 0; // turn off ADC
     P3OUT &= ~VSENSE_POWER; // turn off voltage sensing circuit
 
+    __mementos_log_event(MEMENTOS_STATUS_DONE_CHECKING_VOLTAGE);
+
     /* ADC10MEM now contains 1024 * ((Vout/3) / 2.5V);
      * Vout = 3 * 2.5V * ADC10MEM / 1024;
      * scale up the 10-bit result to a full unsigned int */
