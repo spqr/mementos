@@ -57,7 +57,7 @@ bool MementosSizeGlobals::runOnModule (Module &M) {
   TD = getAnalysisIfAvailable<TargetData>();
   for (Module::const_global_iterator i = M.global_begin();
       i != M.global_end(); ++i) {
-    const Type *T = i->getType()->getElementType();
+    Type *T = i->getType()->getElementType();
     const unsigned int bytes = TD->getTypeAllocSize(T);
     const StringRef s = i->getName();
     DEBUG(outs() << "Found a global of size " << bytes << " (" << s << ")\n");

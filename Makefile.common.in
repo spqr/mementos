@@ -21,11 +21,11 @@ override MCFLAGS+=-I$(PWD)/include -mmcu=$(MCU)
 # OS-specific options
 OS=$(shell uname -s)
 ifeq ($(OS),Darwin)
- LIBEXT=dylib
+ LIBNAME=Mementos.dylib
 else
- LIBEXT=so
+ LIBNAME=libMementos.so
 endif
-MEMENTOSLIB=$(LLVM)/lib/libMementos.$(LIBEXT)
+MEMENTOSLIB=$(LLVM)/lib/$(LIBNAME)
 
 # optimization passes common to all flavors
 OPT_GSIZE=$(OPT) -load $(MEMENTOSLIB) -mementos-add-global-size-global -mementos-rename-main
