@@ -51,7 +51,7 @@ bool MementosAddGlobalSizeGlobal::runOnModule (Module &M) {
     DEBUG(outs() << "Size of globals (bytes): " << tsbytes << "\n");
 
     // TargetData *TD = getAnalysisIfAvailable<TargetData>();
-    const Type *Int16 = Type::getInt16Ty(M.getContext());
+    Type *Int16 = Type::getInt16Ty(M.getContext());
     Constant *TotalSizeInBytes =
         ConstantInt::get(Int16, tsbytes);
         /* no longer add TD->getTypeAllocSize(Int16)) to account for the global
