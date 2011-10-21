@@ -23,7 +23,7 @@ OS=$(shell uname -s)
 ifeq ($(OS),Darwin)
  LIBNAME=Mementos.dylib
 else
- LIBNAME=libMementos.so
+ LIBNAME=Mementos.so
 endif
 MEMENTOSLIB=$(LLVM)/lib/$(LIBNAME)
 
