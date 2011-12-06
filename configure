@@ -620,6 +620,7 @@ LLVMCONFIG
 MSPGCC
 LLVMPREFIX
 MSPGCCPREFIX
+MSPGCCINCLUDEPREFIX
 MSPSIMPREFIX
 LIBOBJS
 LTLIBOBJS'
@@ -1199,6 +1200,8 @@ Optional Packages:
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --with-llvm=PATH        specify path to LLVM
   --with-mspgcc=PATH      specify path to mspgcc
+  --with-mspgcc-include=PATH
+                          specify path to mspgcc includes
   --with-mspsim=PATH      specify path to mspsim
 
 Report bugs to <ransford@cs.umass.edu>.
@@ -1745,6 +1748,16 @@ echo "$as_me: error: msp430-gcc not found in your PATH and --with-mspgcc not spe
 fi
 
 
+# Check whether --with-mspgcc-include was given.
+if test "${with_mspgcc_include+set}" = set; then
+  withval=$with_mspgcc_include; MSPGCCINCLUDEPREFIX="$withval"
+fi
+
+if [ -z "$MSPGCCINCLUDEPREFIX" ]; then
+	MSPGCCINCLUDEPREFIX="$MSPGCCPREFIX"
+fi
+
+
 # Check whether --with-mspsim was given.
 if test "${with_mspsim+set}" = set; then
   withval=$with_mspsim; MSPSIMPREFIX="$withval"
@@ -1754,6 +1767,7 @@ fi
 
 
 ac_config_files="$ac_config_files Makefile.common"
+
 
 
 
@@ -2429,12 +2443,13 @@ LLVMCONFIG!$LLVMCONFIG$ac_delim
 MSPGCC!$MSPGCC$ac_delim
 LLVMPREFIX!$LLVMPREFIX$ac_delim
 MSPGCCPREFIX!$MSPGCCPREFIX$ac_delim
+MSPGCCINCLUDEPREFIX!$MSPGCCINCLUDEPREFIX$ac_delim
 MSPSIMPREFIX!$MSPSIMPREFIX$ac_delim
 LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 44; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 45; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5

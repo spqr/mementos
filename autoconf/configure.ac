@@ -27,6 +27,14 @@ if [[ -z "$MSPGCCPREFIX" ]]; then
 	MSPGCCPREFIX=`dirname $(which $MSPGCC)`/..
 fi
 
+AC_ARG_WITH(mspgcc-include,
+	AS_HELP_STRING([--with-mspgcc-include=PATH],
+		       [specify path to mspgcc includes]),
+	MSPGCCINCLUDEPREFIX="$withval")
+if [[ -z "$MSPGCCINCLUDEPREFIX" ]]; then
+	MSPGCCINCLUDEPREFIX="$MSPGCCPREFIX"
+fi
+
 AC_ARG_WITH(mspsim,
 	    AS_HELP_STRING([--with-mspsim=PATH],
 	    		   [specify path to mspsim]),
@@ -40,6 +48,7 @@ AC_CONFIG_FILES(Makefile.common)
 
 AC_SUBST(LLVMPREFIX)
 AC_SUBST(MSPGCCPREFIX)
+AC_SUBST(MSPGCCINCLUDEPREFIX)
 AC_SUBST(MSPSIMPREFIX)
 
 dnl This must be last

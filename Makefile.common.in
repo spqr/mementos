@@ -2,6 +2,7 @@
 
 LLVM = @LLVMPREFIX@
 MSPGCC = @MSPGCCPREFIX@
+MSPGCCINCLUDES = @MSPGCCINCLUDEPREFIX@
 MSPSIM = @MSPSIMPREFIX@
 
 # toolchain elements
@@ -15,7 +16,7 @@ MCU ?= msp430x2131
 MCUDEF = $(shell echo "$(MCU)" | sed -e 's/^/__/; s/$$/__/; s/x/_/' | tr a-z A-Z)
 
 # compiler flags
-override CFLAGS+=-I$(PWD)/include -I$(MSPGCC)/msp430/include -D$(MCUDEF) -O0 -emit-llvm -ccc-host-triple msp430-elf
+override CFLAGS+=-I$(PWD)/include -I$(MSPGCCINCLUDES)/msp430/include -D$(MCUDEF) -O0 -emit-llvm -ccc-host-triple msp430-elf
 override MCFLAGS+=-I$(PWD)/include -mmcu=$(MCU)
 
 # OS-specific options
