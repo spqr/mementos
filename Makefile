@@ -13,7 +13,7 @@
 # conditional definitions
 TARGET ?= samples/crc-vanilla
 
-include Makefile.common
+-include Makefile.common
 
 .DUMMY: all clean gdbcommands install strip
 
@@ -141,3 +141,6 @@ gdbcommands: $(TARGETS)
 clean:
 	$(RM) $(TARGETS) *.o samples/*.o *.bc samples/*.bc *.s samples/*.s \
 		include/mementos.h logme *.gdb samples/*.gdb
+
+distclean:
+	$(RM) Makefile.common config.log config.status configure
