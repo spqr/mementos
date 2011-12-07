@@ -126,8 +126,7 @@ unsigned int __mementos_voltage_check (void);
 /* 0x01C0 is an (apparently) unused addr in peripheral memory on MSP430F2132, so
  * our simulator (mspsim) tracks accesses to it and returns energy data when
  * it's read. */
-#define VOLTAGE_CHECK_ 0x01C0
-sfrw(VOLTAGE_CHECK, VOLTAGE_CHECK_);
+extern volatile unsigned int VOLTAGE_CHECK asm("0x01C0");
 #endif // MEMENTOS_HARDWARE
 
 #define MEMENTOS_MAGIC_NUMBER 0xBEADu
