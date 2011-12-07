@@ -15,6 +15,7 @@ if test $? -ne 0 ; then
 fi
 echo "Regenerating aclocal.m4 with aclocal"
 rm -f aclocal.m4
+hash llvm-config >&/dev/null || die "llvm-config not found"
 llvm_m4="`llvm-config --src-root`/autoconf/m4"
 aclocal -I $llvm_m4 -I "$llvm_m4/.." || die "aclocal failed"
 echo "Regenerating configure with autoconf"

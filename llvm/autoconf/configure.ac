@@ -14,6 +14,7 @@ if [[ -z "$LLVMPREFIX" ]]; then
 	fi
 	LLVMPREFIX=`$LLVMCONFIG --prefix`
 fi
+LLVMCONFIG="${LLVMPREFIX}/bin/llvm-config"
 
 dnl Identify where LLVM source tree is
 LLVM_SRC_ROOT=`$LLVMCONFIG --src-root`
