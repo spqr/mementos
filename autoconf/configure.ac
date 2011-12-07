@@ -25,6 +25,7 @@ if [[ -z "$MSPGCCPREFIX" ]]; then
   		AC_MSG_ERROR([msp430-gcc not found in your PATH and --with-mspgcc not specified; quitting.])
 	fi
 	MSPGCCPREFIX=`dirname $(which $MSPGCC)`/..
+	CFLAGS="-I${MSPGCCPREFIX}/include"
 fi
 
 AC_ARG_WITH(mspgcc-include,
@@ -32,7 +33,10 @@ AC_ARG_WITH(mspgcc-include,
 		       [specify path to mspgcc includes]),
 	MSPGCCINCLUDEPREFIX="$withval")
 if [[ -z "$MSPGCCINCLUDEPREFIX" ]]; then
+	AC_CHECK_HEADERS([in430.h msp430x21x1.h], [],
+		[AC_MSG_ERROR([mspgcc headers not found; use --with-mspgcc-include])])
 	MSPGCCINCLUDEPREFIX="$MSPGCCPREFIX"
+	CFLAGS="-I${MSPGCCINCLUDEPREFIX}/include"
 fi
 
 AC_ARG_WITH(mspsim,
