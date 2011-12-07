@@ -1,7 +1,7 @@
 dnl **************************************************************************
 dnl * Initialize
 dnl **************************************************************************
-AC_INIT([[[mementos]]],[[[1.0]]],[ransford@cs.umass.edu])
+AC_INIT([[[mementos]]],[[[1.1]]],[ransford@cs.umass.edu])
 
 AC_ARG_WITH(llvm,
 	    AS_HELP_STRING([--with-llvm=PATH],
