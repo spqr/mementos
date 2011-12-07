@@ -13,9 +13,9 @@
 # conditional definitions
 TARGET ?= samples/crc-vanilla
 
--include Makefile.common
+include Makefile.common
 
-.DUMMY: all clean gdbcommands install strip
+.DUMMY: all clean distclean gdbcommands install strip
 
 ifeq ($(TARGET),samples/sense)
  MCLIBS=-lm
@@ -143,4 +143,4 @@ clean:
 		include/mementos.h logme *.gdb samples/*.gdb
 
 distclean:
-	$(RM) Makefile.common config.log config.status configure
+	$(RM) config.log config.status
