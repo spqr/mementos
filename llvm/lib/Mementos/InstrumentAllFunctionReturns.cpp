@@ -85,7 +85,7 @@ bool MementosInstrumentAllFunctionReturns::runOnBasicBlock (BasicBlock &BB) {
     if (isa<InlineAsm>(ci->getCalledValue()))
       continue; // skip inline assembly pseudo-calls
 
-    StringRef target = ci->getCalledValue()->getNameStr();
+    StringRef target = ci->getCalledValue()->getName();
     if (target.find(MEMENTOS_FUNCTION_PREFIX) != StringRef::npos) {
       DEBUG(outs() << "Skipping return from Mementos-internal function\n");
       continue;
