@@ -30,6 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <mementos.h>
+#include <msp430builtins.h> // XXX hack
 
 extern int _old_main (void);
 unsigned int baseaddr;
@@ -547,7 +548,7 @@ int main (void) {
     TACCTL0 = CCIE; // CCR0 interrupt enabled
     TACCR0 = TIMER_INTERVAL;
     TACTL = TASSEL_2 + MC_1; // SMCLK, up mode
-    __bis_SR_register(GIE);
+    __bis_status_register(GIE);
     ok_to_checkpoint = 0;
 #endif
 
