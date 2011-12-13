@@ -1,2 +1,7 @@
 Makefile.common
-autoconf/autom4te.cache
+**/autoconf/autom4te.cache/
+**/autoconf/aclocal.m4
+config.status
+config.log
+llvm/Debug+Asserts/
+llvm/lib/Mementos/Debug+Asserts/
