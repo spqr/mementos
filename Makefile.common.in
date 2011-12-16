@@ -1,6 +1,8 @@
 .SUFFIXES: .c .o .s .bc
 
 LLVM = @LLVMPREFIX@
+LLVM_BIN = @LLVM_BIN@
+LLVM_LIB = @LLVM_LIB@
 CLANG = @CLANG@
 MSPGCC = @MSPGCCPREFIX@
 MSPGCCHEADERS = @MSPGCCHEADERS@
@@ -8,9 +10,9 @@ MSPSIM = @MSPSIMPREFIX@
 
 # toolchain elements
 MCC=$(MSPGCC)/bin/msp430-gcc
-LLC=$(LLVM)/llc -march=msp430 -combiner-alias-analysis
-OPT=$(LLVM)/opt -debug -stats
-LLVM_LINK=$(LLVM)/llvm-link
+LLC=$(LLVM_BIN)/llc -march=msp430 -combiner-alias-analysis
+OPT=$(LLVM_BIN)/opt -debug -stats
+LLVM_LINK=$(LLVM_BIN)/llvm-link
 
 # chip to target (unless already defined)
 MCU ?= msp430x2131
@@ -27,7 +29,7 @@ ifeq ($(OS),Darwin)
 else
  LIBNAME=Mementos.so
 endif
-MEMENTOSLIB=$(LLVM)/lib/$(LIBNAME)
+MEMENTOSLIB=$(LLVM_LIB)/$(LIBNAME)
 
 # optimization passes common to all flavors
 OPT_GSIZE=$(OPT) -load $(MEMENTOSLIB) -mementos-add-global-size-global -mementos-rename-main

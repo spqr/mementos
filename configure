@@ -570,6 +570,8 @@ LIBOBJS
 MSPSIMPREFIX
 MSPGCCHEADERS
 MSPGCCPREFIX
+LLVM_LIB
+LLVM_BIN
 LLVMPREFIX
 MSPGCC
 LLVM_LINK
@@ -1677,8 +1679,7 @@ if test "${with_llvm+set}" = set; then :
   withval=$with_llvm; LLVMPREFIX="$withval"
 fi
 
-if [ -z "$LLVMPREFIX" ]; then
-	for ac_prog in llvm-config llvm-config-2.9
+for ac_prog in llvm-config llvm-config-2.9
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -1724,14 +1725,15 @@ fi
 done
 test -n "$LLVMCONFIG" || LLVMCONFIG="${LLVMPREFIX}/bin"
 
-	if [ -z "$LLVMCONFIG" ]; then
-	  as_fn_error $? "llvm-config not found in your PATH; quitting." "$LINENO" 5
-	fi
+if [ -z "$LLVMCONFIG" ]; then
+  as_fn_error $? "llvm-config not found in your PATH; quitting." "$LINENO" 5
+fi
 
-	LLVMPREFIX=`$LLVMCONFIG --bindir`
-	echo "LLVMPREFIX=$LLVMPREFIX"
+LLVMPREFIX=`$LLVMCONFIG --prefix`
+LLVM_BIN=`$LLVMCONFIG --bindir`
+LLVM_LIB=`$LLVMCONFIG --libdir`
 
-	for ac_prog in clang
+for ac_prog in clang
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -1775,9 +1777,9 @@ fi
 
   test -n "$CLANG" && break
 done
-test -n "$CLANG" || CLANG="${LLVMPREFIX}"
+test -n "$CLANG" || CLANG="${LLVM_BIN}"
 
-	for ac_prog in opt
+for ac_prog in opt
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -1821,12 +1823,12 @@ fi
 
   test -n "$LLVM_OPT" && break
 done
-test -n "$LLVM_OPT" || LLVM_OPT="${LLVMPREFIX}"
+test -n "$LLVM_OPT" || LLVM_OPT="${LLVM_BIN}"
 
-	if [ -z "$LLVM_OPT" ]; then
-		as_fn_error $? "\"LLVM misconfigured (opt tool is missing)\"" "$LINENO" 5
-	fi
-	for ac_prog in llc
+if [ -z "$LLVM_OPT" ]; then
+	as_fn_error $? "\"LLVM misconfigured (opt tool is missing)\"" "$LINENO" 5
+fi
+for ac_prog in llc
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -1870,12 +1872,12 @@ fi
 
   test -n "$LLVM_LLC" && break
 done
-test -n "$LLVM_LLC" || LLVM_LLC="${LLVMPREFIX}"
+test -n "$LLVM_LLC" || LLVM_LLC="${LLVM_BIN}"
 
-	if [ -z "$LLVM_LLC" ]; then
-		as_fn_error $? "\"LLVM misconfigured (llc tool is missing)\"" "$LINENO" 5
-	fi
-	for ac_prog in llvm-link
+if [ -z "$LLVM_LLC" ]; then
+	as_fn_error $? "\"LLVM misconfigured (llc tool is missing)\"" "$LINENO" 5
+fi
+for ac_prog in llvm-link
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -1919,11 +1921,10 @@ fi
 
   test -n "$LLVM_LINK" && break
 done
-test -n "$LLVM_LINK" || LLVM_LINK="${LLVMPREFIX}"
+test -n "$LLVM_LINK" || LLVM_LINK="${LLVM_BIN}"
 
-	if [ -z "$LLVM_LINK" ]; then
-		as_fn_error $? "\"LLVM misconfigured (llvm-link tool is missing)\"" "$LINENO" 5
-	fi
+if [ -z "$LLVM_LINK" ]; then
+	as_fn_error $? "\"LLVM misconfigured (llvm-link tool is missing)\"" "$LINENO" 5
 fi
 
 
@@ -2029,6 +2030,8 @@ fi
 
 
 ac_config_files="$ac_config_files Makefile.common"
+
+
 
 
 

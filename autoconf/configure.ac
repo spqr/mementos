@@ -12,18 +12,20 @@ if [[ -z "$LLVMCONFIG" ]]; then
   AC_MSG_ERROR([llvm-config not found in your PATH; quitting.])
 fi
 
-LLVMPREFIX=`$LLVMCONFIG --bindir`
+LLVMPREFIX=`$LLVMCONFIG --prefix`
+LLVM_BIN=`$LLVMCONFIG --bindir`
+LLVM_LIB=`$LLVMCONFIG --libdir`
 
-AC_PATH_PROGS([CLANG], [clang], [${LLVMPREFIX}])
-AC_PATH_PROGS([LLVM_OPT], [opt], [${LLVMPREFIX}])
+AC_PATH_PROGS([CLANG], [clang], [${LLVM_BIN}])
+AC_PATH_PROGS([LLVM_OPT], [opt], [${LLVM_BIN}])
 if [[ -z "$LLVM_OPT" ]]; then
 	AC_MSG_ERROR("LLVM misconfigured (opt tool is missing)")
 fi
-AC_PATH_PROGS([LLVM_LLC], [llc], [${LLVMPREFIX}])
+AC_PATH_PROGS([LLVM_LLC], [llc], [${LLVM_BIN}])
 if [[ -z "$LLVM_LLC" ]]; then
 	AC_MSG_ERROR("LLVM misconfigured (llc tool is missing)")
 fi
-AC_PATH_PROGS([LLVM_LINK], [llvm-link], [${LLVMPREFIX}])
+AC_PATH_PROGS([LLVM_LINK], [llvm-link], [${LLVM_BIN}])
 if [[ -z "$LLVM_LINK" ]]; then
 	AC_MSG_ERROR("LLVM misconfigured (llvm-link tool is missing)")
 fi
@@ -63,6 +65,8 @@ dnl Configure a common Makefile
 AC_CONFIG_FILES(Makefile.common)
 
 AC_SUBST(LLVMPREFIX)
+AC_SUBST(LLVM_BIN)
+AC_SUBST(LLVM_LIB)
 AC_SUBST(MSPGCCPREFIX)
 AC_SUBST(MSPGCCHEADERS)
 AC_SUBST(MSPSIMPREFIX)
