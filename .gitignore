@@ -4,4 +4,6 @@ Makefile.common
 config.status
 config.log
 llvm/Debug+Asserts/
+llvm/Release+Asserts/
 llvm/lib/Mementos/Debug+Asserts/
+llvm/lib/Mementos/Release+Asserts/
