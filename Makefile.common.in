@@ -1,22 +1,23 @@
 .SUFFIXES: .c .o .s .bc
 
 LLVM = @LLVMPREFIX@
+CLANG = @CLANG@
 MSPGCC = @MSPGCCPREFIX@
-MSPGCCINCLUDES = @MSPGCCINCLUDEPREFIX@
+MSPGCCHEADERS = @MSPGCCHEADERS@
 MSPSIM = @MSPSIMPREFIX@
 
 # toolchain elements
 MCC=$(MSPGCC)/bin/msp430-gcc
-CC=$(LLVM)/bin/clang
-LLC=$(LLVM)/bin/llc -march=msp430 -combiner-alias-analysis
-OPT=$(LLVM)/bin/opt -debug -stats
+LLC=$(LLVM)/llc -march=msp430 -combiner-alias-analysis
+OPT=$(LLVM)/opt -debug -stats
+LLVM_LINK=$(LLVM)/llvm-link
 
 # chip to target (unless already defined)
 MCU ?= msp430x2131
 MCUDEF = $(shell echo "$(MCU)" | sed -e 's/^/__/; s/$$/__/; s/x/_/' | tr a-z A-Z)
 
 # compiler flags
-override CFLAGS+=-I$(PWD)/include -I$(MSPGCCINCLUDES)/msp430/include -D$(MCUDEF) -O0 -emit-llvm -ccc-host-triple msp430-elf
+override CFLAGS+=-I$(PWD)/include -I$(MSPGCCHEADERS) -D$(MCUDEF) -O0 -emit-llvm -ccc-host-triple msp430-elf
 override MCFLAGS+=-I$(PWD)/include -mmcu=$(MCU)
 
 # OS-specific options
