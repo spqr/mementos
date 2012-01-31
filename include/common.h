@@ -1,11 +1,17 @@
 #ifndef __COMMON_H__
+#define __COMMON_H__
 
-#if defined(__MSP430__) && !defined(__clang__) // mspgcc
-/* if you don't substitute your own __stop_progExec__ function for mspgcc's
- * default, your program will loop forever when its work is done */
-void __stop_progExec__ (void) {
-}
-#endif
+#if defined(__MSPGCC__) || (defined(__MSP430__) && !defined(__clang__))
+#if (__MSPGCC__ >= 20110706)
+/* squash stuff that would put program in endless loop after main */
+void _endless_loop__ (void) { }
+void __ctors_end (void) { }
+void _unexpected_ (void) { }
+#else
+/* squash stuff that would put program in endless loop after main */
+void __stop_progExec__ (void) { }
+#endif // __MSPGCC__
+#endif // mspgcc
 
 // from newmem.h
 #define MEMREF(x) (*((unsigned int*)(x)))
