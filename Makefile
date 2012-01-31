@@ -54,7 +54,7 @@ include/mementos.h:
 	scripts/setthresh.pl $(VTHRESH) $(TIMERINT) include/mementos.h.tmpl >include/mementos.h
 
 .c.bc: include/mementos.h
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CLANG) $(CFLAGS) -c -o $@ $<
 
 install: $(TARGETS)
 ifeq ($(MSPSIM),)
@@ -69,7 +69,7 @@ endif
 
 # plain target built with clang
 $(TARGET)+plainclang: $(TARGET).c include/mementos.h
-	$(CC) $(CFLAGS)   -o $@.bc -c $<
+	$(CLANG) $(CFLAGS)   -o $@.bc -c $<
 	$(LLC)            -o $@.s $@.bc
 	$(MCC) $(MCFLAGS) -o $@ $@.s $(MCLIBS)
 
@@ -80,28 +80,28 @@ $(TARGET)+plainmspgcc: $(TARGET).c include/mementos.h
 
 # standalone Mementos bitcode (for linking against)
 mementos+latch.bc: mementos.c
-	$(CC) $(CFLAGS) -o $@ -DMEMENTOS_LATCH -c $<
+	$(CLANG) $(CFLAGS) -o $@ -DMEMENTOS_LATCH -c $<
 mementos+return.bc: mementos.c
-	$(CC) $(CFLAGS) -o $@ -DMEMENTOS_RETURN -c $<
+	$(CLANG) $(CFLAGS) -o $@ -DMEMENTOS_RETURN -c $<
 mementos+timer+latch.bc: mementos.c
-	$(CC) $(CFLAGS) -o $@ -DMEMENTOS_TIMER -DMEMENTOS_LATCH -c $<
+	$(CLANG) $(CFLAGS) -o $@ -DMEMENTOS_TIMER -DMEMENTOS_LATCH -c $<
 mementos+oracle.bc: mementos.c
-	$(CC) $(CFLAGS) -o $@ -DMEMENTOS_ORACLE -c $<
+	$(CLANG) $(CFLAGS) -o $@ -DMEMENTOS_ORACLE -c $<
 
 # instrument all loop latches
 $(TARGET)+latch: $(TARGET).c include/mementos.h mementos+latch.bc
-	$(CC) $(CFLAGS)   -o $@.bc -DMEMENTOS_LATCH -c $<
+	$(CLANG) $(CFLAGS)   -o $@.bc -DMEMENTOS_LATCH -c $<
 	$(OPT_GSIZE)      -o $@+gsize.bc $@.bc
-	$(LLVM)/bin/llvm-link         -o $@+gsize+mementos.bc $@+gsize.bc mementos+latch.bc
+	$(LLVM_LINK)      -o $@+gsize+mementos.bc $@+gsize.bc mementos+latch.bc
 	$(OPT_LATCH)      -o $@+gsize+mementos+o.bc $@+gsize+mementos.bc
 	$(LLC)            -o $@.s $@+gsize+mementos+o.bc
 	$(MCC) $(MCFLAGS) -o $@ $@.s $(MCLIBS)
 
 # instrument all function returns
 $(TARGET)+return: $(TARGET).c include/mementos.h mementos+return.bc
-	$(CC) $(CFLAGS)   -o $@.bc -DMEMENTOS_RETURN -c $<
+	$(CLANG) $(CFLAGS)   -o $@.bc -DMEMENTOS_RETURN -c $<
 	$(OPT_GSIZE)      -o $@+gsize.bc $@.bc
-	$(LLVM)/bin/llvm-link         -o $@+gsize+mementos.bc $@+gsize.bc mementos+return.bc
+	$(LLVM_LINK)      -o $@+gsize+mementos.bc $@+gsize.bc mementos+return.bc
 	$(OPT_RETURN)     -o $@+gsize+mementos+o.bc $@+gsize+mementos.bc
 	$(LLC)            -o $@.s $@+gsize+mementos+o.bc
 	$(MCC) $(MCFLAGS) -o $@ $@.s $(MCLIBS)
@@ -111,18 +111,18 @@ $(TARGET)+return: $(TARGET).c include/mementos.h mementos+return.bc
 # 'ok_to_checkpoint' flag is set, which happens every TIMER_INTERVAL
 # (include/mementos.h) cycles.
 $(TARGET)+timer: $(TARGET).c include/mementos.h mementos+timer+latch.bc
-	$(CC) $(CFLAGS)   -o $@.bc -DMEMENTOS_TIMER -DMEMENTOS_LATCH -c $<
+	$(CLANG) $(CFLAGS)   -o $@.bc -DMEMENTOS_TIMER -DMEMENTOS_LATCH -c $<
 	$(OPT_GSIZE)      -o $@+gsize.bc $@.bc
-	$(LLVM)/bin/llvm-link         -o $@+gsize+mementos.bc $@+gsize.bc mementos+timer+latch.bc
+	$(LLVM_LINK)      -o $@+gsize+mementos.bc $@+gsize.bc mementos+timer+latch.bc
 	$(OPT_LATCH)      -o $@+gsize+mementos+o.bc $@+gsize+mementos.bc
 	$(LLC)            -o $@.s $@+gsize+mementos+o.bc
 	$(MCC) $(MCFLAGS) -o $@ $@.s $(MCLIBS)
 
 # link against mementos but don't instrument code
 $(TARGET)+oracle: $(TARGET).c include/mementos.h mementos+oracle.bc
-	$(CC) $(CFLAGS)   -o $@.bc -DMEMENTOS_ORACLE -c $<
+	$(CLANG) $(CFLAGS)   -o $@.bc -DMEMENTOS_ORACLE -c $<
 	$(OPT_GSIZE)      -o $@+gsize.bc $@.bc
-	$(LLVM)/bin/llvm-link -o $@+gsize+mementos.bc $@+gsize.bc mementos+oracle.bc
+	$(LLVM_LINK)      -o $@+gsize+mementos.bc $@+gsize.bc mementos+oracle.bc
 	$(LLC)            -o $@.s $@+gsize+mementos.bc
 	$(MCC) $(MCFLAGS) -o $@ $@.s $(MCLIBS)
 
