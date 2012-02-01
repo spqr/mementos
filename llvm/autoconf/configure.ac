@@ -7,7 +7,7 @@ AC_ARG_WITH(llvm,
 	    AS_HELP_STRING([--with-llvm=PATH],
 	    		   [specify path to LLVM]),
 	    LLVMPREFIX="$withval")
-AC_CHECK_PROGS([LLVMCONFIG], [llvm-config llvm-config-2.9])
+AC_PATH_PROGS([LLVMCONFIG], [llvm-config llvm-config-2.9], [], [${LLVMPREFIX}/bin])
 if [[ -z "$LLVMCONFIG" ]]; then
   AC_MSG_ERROR([llvm-config not found in your PATH; quitting.])
 fi
