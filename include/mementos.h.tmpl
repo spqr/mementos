@@ -32,14 +32,19 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef __NEWMEM_H__
 #define __NEWMEM_H__
 
-#ifdef __MSP430_2131__
-# include <msp430x21x1.h>
-#elif defined(__MSP430_2132__)
-# include <msp430x21x2.h>
-#elif defined(__MSP430_1611__)
-# include <msp430x14x.h>
+#ifdef __MSPGCC__
+#include <msp430.h>
+#elif (defined(__clang__))
+#include <msp430f2618.h>
 #else
-#error Unsupported hardware.
+#error Unsupported compiler; use either mspgcc or Clang.
+#endif
+
+#if (!defined(__msp430x21x1) && \
+        !defined(__msp430x21x2) && \
+        !defined(__msp430x16x) && \
+        !defined(__msp430x26x))
+#error Unsupported hardware; see mementos.h.
 #endif
 
 #ifdef MEMENTOS_HARDWARE
@@ -132,14 +137,17 @@ extern volatile unsigned int VOLTAGE_CHECK asm("0x01C0");
 #define MEMENTOS_MAGIC_NUMBER 0xBEADu
 
 /* horrible cheating hackery */
-#ifdef __MSP430_2131__
+#ifdef __msp430x21x1
 #define TOPOFSTACK 0x0300
 #define STARTOFDATA 0x0200
-#elif defined(__MSP430_2132__)
+#elif defined(__msp430x21x2)
 #define TOPOFSTACK 0x0400
 #define STARTOFDATA 0x0200
-#elif defined(__MSP430_1611__)
+#elif defined(__msp430x16x)
 #define TOPOFSTACK 0x3900
+#define STARTOFDATA 0x1100
+#elif defined(__msp430x26x)
+#define TOPOFSTACK 0x3100
 #define STARTOFDATA 0x1100
 #endif
 
