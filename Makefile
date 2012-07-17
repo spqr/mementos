@@ -71,11 +71,11 @@ endif
 $(TARGET)+plainclang: $(TARGET).c include/mementos.h
 	$(CLANG) $(CFLAGS)   -o $@.bc -c $<
 	$(LLC)            -o $@.s $@.bc
-	$(MCC) $(MCFLAGS) -o $@ $@.s $(MCLIBS)
+	$(MSPGCC) $(MCFLAGS) -o $@ $@.s $(MCLIBS)
 
 # plain target built with mspgcc
 $(TARGET)+plainmspgcc: $(TARGET).c include/mementos.h
-	$(MCC) $(MCFLAGS) -o $@ $< $(MCLIBS)
+	$(MSPGCC) $(MCFLAGS) -o $@ $< $(MCLIBS)
 
 
 # standalone Mementos bitcode (for linking against)
@@ -95,7 +95,7 @@ $(TARGET)+latch: $(TARGET).c include/mementos.h mementos+latch.bc
 	$(LLVM_LINK)      -o $@+gsize+mementos.bc $@+gsize.bc mementos+latch.bc
 	$(OPT_LATCH)      -o $@+gsize+mementos+o.bc $@+gsize+mementos.bc
 	$(LLC)            -o $@.s $@+gsize+mementos+o.bc
-	$(MCC) $(MCFLAGS) -o $@ $@.s $(MCLIBS)
+	$(MSPGCC) $(MCFLAGS) -o $@ $@.s $(MCLIBS)
 
 # instrument all function returns
 $(TARGET)+return: $(TARGET).c include/mementos.h mementos+return.bc
@@ -104,7 +104,7 @@ $(TARGET)+return: $(TARGET).c include/mementos.h mementos+return.bc
 	$(LLVM_LINK)      -o $@+gsize+mementos.bc $@+gsize.bc mementos+return.bc
 	$(OPT_RETURN)     -o $@+gsize+mementos+o.bc $@+gsize+mementos.bc
 	$(LLC)            -o $@.s $@+gsize+mementos+o.bc
-	$(MCC) $(MCFLAGS) -o $@ $@.s $(MCLIBS)
+	$(MSPGCC) $(MCFLAGS) -o $@ $@.s $(MCLIBS)
 
 # instrument loop latches with trigger points, but these trigger points won't
 # run at all (i.e., return without doing an energy check) unless the
@@ -116,7 +116,7 @@ $(TARGET)+timer: $(TARGET).c include/mementos.h mementos+timer+latch.bc
 	$(LLVM_LINK)      -o $@+gsize+mementos.bc $@+gsize.bc mementos+timer+latch.bc
 	$(OPT_LATCH)      -o $@+gsize+mementos+o.bc $@+gsize+mementos.bc
 	$(LLC)            -o $@.s $@+gsize+mementos+o.bc
-	$(MCC) $(MCFLAGS) -o $@ $@.s $(MCLIBS)
+	$(MSPGCC) $(MCFLAGS) -o $@ $@.s $(MCLIBS)
 
 # link against mementos but don't instrument code
 $(TARGET)+oracle: $(TARGET).c include/mementos.h mementos+oracle.bc
@@ -124,7 +124,7 @@ $(TARGET)+oracle: $(TARGET).c include/mementos.h mementos+oracle.bc
 	$(OPT_GSIZE)      -o $@+gsize.bc $@.bc
 	$(LLVM_LINK)      -o $@+gsize+mementos.bc $@+gsize.bc mementos+oracle.bc
 	$(LLC)            -o $@.s $@+gsize+mementos.bc
-	$(MCC) $(MCFLAGS) -o $@ $@.s $(MCLIBS)
+	$(MSPGCC) $(MCFLAGS) -o $@ $@.s $(MCLIBS)
 
 logme: logme.c
 	msp430-gcc -mmcu=msp430x2132 -o $@ $<
