@@ -4,15 +4,12 @@ dnl **************************************************************************
 AC_INIT([[[mementos]]],[[[1.1]]],[ransford@cs.umass.edu])
 
 AC_ARG_WITH(llvm,
-	    AS_HELP_STRING([--with-llvm=PATH],
-	    		   [specify path to LLVM]),
-	    LLVMPREFIX="$withval")
-AC_PATH_PROGS([LLVMCONFIG], [llvm-config llvm-config-2.9], [], [${LLVMPREFIX}/bin])
-if [[ -z "$LLVMCONFIG" ]]; then
-  AC_MSG_ERROR([llvm-config not found in your PATH; quitting.])
-fi
-
-LLVMPREFIX=`$LLVMCONFIG --bindir`
+	AS_HELP_STRING([--with-llvm=PATH], [specify path to LLVM]))
+AS_IF([test -n "$with_llvm"],
+	[AC_PATH_PROG([LLVMCONFIG], [llvm-config], [], [${with_llvm}/bin])],
+	[AC_PATH_PROG([LLVMCONFIG], [llvm-config])])
+AS_IF([test -z "$LLVMCONFIG"],
+	[AC_MSG_ERROR([llvm-config not found in your PATH; quitting.])])
 
 dnl Identify where LLVM source tree is
 LLVM_SRC_ROOT=`$LLVMCONFIG --src-root`
