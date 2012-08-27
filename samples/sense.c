@@ -154,6 +154,7 @@ void store (void) {
     FCTL3 = FWKEY + LOCK;
 }
 
+MEMENTOS_MAIN_ATTRIBUTES
 int main (void) {
 #ifdef __MSP430__
     setup();
