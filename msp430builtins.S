@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2011, University of Massachusetts Amherst
+Copyright (c) 2012, University of Massachusetts Amherst
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -33,13 +33,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * Builtins that mspgcc provides but clang doesn't.
  */
 
-#ifndef __MSP430BUILTINS_H__
-#define __MSP430BUILTINS_H__
-
-#define __bis_status_register(x) \
-    do { asm volatile("BIS %0, R2" ::"i"((x))); } while (0);
-
-extern int __mulhi3hw_noint (int a, int b);
-
-#endif /* __MSP430BUILTINS_H__ */
-// vim:ft=c
+.global __mulhi3hw_noint
+	.type __mulhi3hw_noint,@function
+__mulhi3hw_noint:
+	MOV R15, &0x132
+	MOV R14, &0x138
+	MOV &0x13A, R15
+	RET

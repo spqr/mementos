@@ -15,11 +15,10 @@ TARGET ?= samples/crc-vanilla
 
 include Makefile.common
 
-.DUMMY: all clean distclean gdbcommands install strip
+MYLIBS = msp430builtins.o
+MCLIBS += $(MYLIBS)
 
-ifeq ($(TARGET),samples/sense)
- MCLIBS=-lm
-endif
+.DUMMY: all clean distclean gdbcommands install strip
 
 ifdef TIMER
 override CFLAGS += -DMEMENTOS_TIMER
@@ -45,7 +44,7 @@ endif
 
 # which flavors to build
 FLAVORS=plainclang plainmspgcc latch return timer oracle
-TARGETS=$(foreach flavor,$(FLAVORS),$(TARGET)+$(flavor))
+TARGETS=$(MYLIBS) $(foreach flavor,$(FLAVORS),$(TARGET)+$(flavor))
 
 all: $(TARGETS)
 
@@ -68,7 +67,7 @@ else
 endif
 
 # plain target built with clang
-$(TARGET)+plainclang: $(TARGET).c include/mementos.h
+$(TARGET)+plainclang: $(TARGET).c include/mementos.h $(MYLIBS)
 	$(CLANG) $(CFLAGS)   -o $@.bc -c $<
 	$(LLC)            -o $@.s $@.bc
 	$(MSPGCC) $(MCFLAGS) -o $@ $@.s $(MCLIBS)
@@ -89,7 +88,7 @@ mementos+oracle.bc: mementos.c
 	$(CLANG) $(CFLAGS) -o $@ -DMEMENTOS_ORACLE -c $<
 
 # instrument all loop latches
-$(TARGET)+latch: $(TARGET).c include/mementos.h mementos+latch.bc
+$(TARGET)+latch: $(TARGET).c include/mementos.h mementos+latch.bc $(MYLIBS)
 	$(CLANG) $(CFLAGS)   -o $@.bc -DMEMENTOS_LATCH -c $<
 	$(OPT_GSIZE)      -o $@+gsize.bc $@.bc
 	$(LLVM_LINK)      -o $@+gsize+mementos.bc $@+gsize.bc mementos+latch.bc
@@ -98,7 +97,7 @@ $(TARGET)+latch: $(TARGET).c include/mementos.h mementos+latch.bc
 	$(MSPGCC) $(MCFLAGS) -o $@ $@.s $(MCLIBS)
 
 # instrument all function returns
-$(TARGET)+return: $(TARGET).c include/mementos.h mementos+return.bc
+$(TARGET)+return: $(TARGET).c include/mementos.h mementos+return.bc $(MYLIBS)
 	$(CLANG) $(CFLAGS)   -o $@.bc -DMEMENTOS_RETURN -c $<
 	$(OPT_GSIZE)      -o $@+gsize.bc $@.bc
 	$(LLVM_LINK)      -o $@+gsize+mementos.bc $@+gsize.bc mementos+return.bc
@@ -110,7 +109,7 @@ $(TARGET)+return: $(TARGET).c include/mementos.h mementos+return.bc
 # run at all (i.e., return without doing an energy check) unless the
 # 'ok_to_checkpoint' flag is set, which happens every TIMER_INTERVAL
 # (include/mementos.h) cycles.
-$(TARGET)+timer: $(TARGET).c include/mementos.h mementos+timer+latch.bc
+$(TARGET)+timer: $(TARGET).c include/mementos.h mementos+timer+latch.bc $(MYLIBS)
 	$(CLANG) $(CFLAGS)   -o $@.bc -DMEMENTOS_TIMER -DMEMENTOS_LATCH -c $<
 	$(OPT_GSIZE)      -o $@+gsize.bc $@.bc
 	$(LLVM_LINK)      -o $@+gsize+mementos.bc $@+gsize.bc mementos+timer+latch.bc
@@ -119,12 +118,15 @@ $(TARGET)+timer: $(TARGET).c include/mementos.h mementos+timer+latch.bc
 	$(MSPGCC) $(MCFLAGS) -o $@ $@.s $(MCLIBS)
 
 # link against mementos but don't instrument code
-$(TARGET)+oracle: $(TARGET).c include/mementos.h mementos+oracle.bc
+$(TARGET)+oracle: $(TARGET).c include/mementos.h mementos+oracle.bc $(MYLIBS)
 	$(CLANG) $(CFLAGS)   -o $@.bc -DMEMENTOS_ORACLE -c $<
 	$(OPT_GSIZE)      -o $@+gsize.bc $@.bc
 	$(LLVM_LINK)      -o $@+gsize+mementos.bc $@+gsize.bc mementos+oracle.bc
 	$(LLC)            -o $@.s $@+gsize+mementos.bc
 	$(MSPGCC) $(MCFLAGS) -o $@ $@.s $(MCLIBS)
+
+msp430builtins.o: msp430builtins.S
+	$(MSPGCC) $(MCFLAGS) -c -o $@ $<
 
 logme: logme.c
 	msp430-gcc -mmcu=msp430x2132 -o $@ $<
