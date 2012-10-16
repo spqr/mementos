@@ -51,11 +51,49 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # include "pinDefWISP4.1DL.h"
 #endif // MEMENTOS_HARDWARE
 
-/* where do the segments to which we can write checkpoint bundles start? */
-#define FIRST_BUNDLE_SEG 0xFA00u
-#define SECOND_BUNDLE_SEG 0xFC00u
+#ifdef __msp430x21x2
+#elif defined(__msp430x26x)
+#endif
+
+// common across MSP430 family
 #define INFOMEM_SEGSIZE 64
 #define MAINMEM_SEGSIZE 512
+
+/* memory parameters.
+ *  - STARTOFDATA, TOPOFSTACK: beginning and end of RAM
+ *  - *_BUNDLE_SEG: segments to which we can write checkpoint bundles.
+ *      n.b.: *don't* use the very last segment of code memory for non-MSP430X
+ *      devices, since it contains interrupt vectors.  consult the datasheet.
+ */
+#ifdef __msp430x21x1
+# define TOPOFSTACK 0x0300
+# define STARTOFDATA 0x0200
+#elif defined(__msp430x21x2)
+# define TOPOFSTACK 0x0400
+# define STARTOFDATA 0x0200
+#elif defined(__msp430x16x)
+# define TOPOFSTACK 0x3900
+# define STARTOFDATA 0x1100
+#elif defined(__msp430x26x)
+# define TOPOFSTACK 0x3100
+# define STARTOFDATA 0x1100
+#endif
+
+#ifdef __MSP430_HAS_MSP430X_CPU__
+# define FIRST_BUNDLE_SEG 0x1FA00ul  // third-to-last segment of code memory
+# define SECOND_BUNDLE_SEG 0x1FC00ul // second-to-last segment
+#else
+# define FIRST_BUNDLE_SEG 0xFA00u    // third-to-last segment of code memory
+# define SECOND_BUNDLE_SEG 0xFC00u   // second-to-last segment
+#endif
+
+
+#ifdef __MSP430_HAS_MSP430X_CPU__
+typedef unsigned long flash_ptr_t;
+#else
+typedef unsigned int flash_ptr_t;
+#endif
+#define MEMREF(x) (*((flash_ptr_t *)(x)))
 
 #ifndef V_THRESH
 /* in Haskell: map (\x -> (x, round $ 65536 * (x/3.0)/2.5)) [1.8,1.9..5.0] */
@@ -100,11 +138,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /* function prototypes */
 void __mementos_checkpoint (void);
-void __mementos_restore (unsigned int);
-void __mementos_erase_segment (unsigned int);
-void __mementos_mark_segment_erase (unsigned int);
-unsigned int __mementos_segment_is_empty (unsigned int);
-unsigned int __mementos_segment_marked_erase (unsigned int);
+void __mementos_restore (flash_ptr_t);
+void __mementos_erase_segment (flash_ptr_t);
+void __mementos_mark_segment_erase (flash_ptr_t);
+unsigned int __mementos_segment_is_empty (flash_ptr_t);
+unsigned int __mementos_segment_marked_erase (flash_ptr_t);
 unsigned int __mementos_locate_next_bundle (unsigned int);
 unsigned int __mementos_find_active_bundle (void);
 
@@ -134,29 +172,13 @@ unsigned int __mementos_voltage_check (void);
 extern volatile unsigned int VOLTAGE_CHECK asm("0x01C0");
 #endif // MEMENTOS_HARDWARE
 
+// canary value, written last in every checkpoint bundle
 #define MEMENTOS_MAGIC_NUMBER 0xBEADu
-
-/* horrible cheating hackery */
-#ifdef __msp430x21x1
-#define TOPOFSTACK 0x0300
-#define STARTOFDATA 0x0200
-#elif defined(__msp430x21x2)
-#define TOPOFSTACK 0x0400
-#define STARTOFDATA 0x0200
-#elif defined(__msp430x16x)
-#define TOPOFSTACK 0x3900
-#define STARTOFDATA 0x1100
-#elif defined(__msp430x26x)
-#define TOPOFSTACK 0x3100
-#define STARTOFDATA 0x1100
-#endif
 
 #ifdef MEMENTOS_TIMER
 void Timer_A (void) __attribute__((interrupt(12))); // 0xFFEC for F1611 XXX
 //==TIMER_INTERVAL==
 #endif
-
-#define MEMREF(x) (*((unsigned int*)(x)))
 
 #endif /* __NEWMEM_H__ */
 // vim:ft=c

@@ -33,7 +33,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <msp430builtins.h> // XXX hack
 
 extern int _old_main (void);
-unsigned int baseaddr;
+flash_ptr_t baseaddr;
 unsigned int i, j, k;
 unsigned int tmpsize;
 // unsigned int interrupts_enabled;
@@ -211,7 +211,7 @@ void __mementos_checkpoint (void) {
     */
 }
 
-void __mementos_restore (unsigned int b) {
+void __mementos_restore (flash_ptr_t b) {
     /* b is a pointer to a valid bundle found by __mementos_find_active_bundle.
      * the first word of the bundle is split: the high byte designates the size
      * (in bytes) of the stack portion of the bundle and the low byte designates
@@ -337,8 +337,8 @@ void __mementos_restore (unsigned int b) {
     asm volatile ("MOV &%0, R0" ::"m"(j)); // implicit jump ... restored!
 }
 
-unsigned int __mementos_segment_is_empty (unsigned int addr) {
-    unsigned int a;
+unsigned int __mementos_segment_is_empty (flash_ptr_t addr) {
+    flash_ptr_t a;
 #define STRIDE 32
     for (a = addr; a < (addr+MAINMEM_SEGSIZE); a += STRIDE) {
         if (MEMREF(a) != 0xFFFFu) return 0;
@@ -346,12 +346,12 @@ unsigned int __mementos_segment_is_empty (unsigned int addr) {
     return 1;
 }
 
-unsigned int __mementos_segment_marked_erase (unsigned int addr) {
+unsigned int __mementos_segment_marked_erase (flash_ptr_t addr) {
     return ((MEMREF(addr+2) == 0x0000u)
             && (MEMREF(addr+MAINMEM_SEGSIZE-2) == 0x0000u));
 }
 
-void __mementos_mark_segment_erase (unsigned int addr) {
+void __mementos_mark_segment_erase (flash_ptr_t addr) {
     FCTL3 = FWKEY;
     FCTL1 = FWKEY + WRT;
     MEMREF(addr+2) = 0x0000u;
