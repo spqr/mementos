@@ -2030,9 +2030,9 @@ else
   MSPSIM="/opt/mementos/src/mspsim"
 fi
 
-as_ac_File=`echo "ac_cv_file_${MSPSIM}/mspsim.jar" | $as_tr_sh`
-{ echo "$as_me:$LINENO: checking for ${MSPSIM}/mspsim.jar" >&5
-echo $ECHO_N "checking for ${MSPSIM}/mspsim.jar... $ECHO_C" >&6; }
+as_ac_File=`echo "ac_cv_file_${MSPSIM}/dist/mspsim.jar" | $as_tr_sh`
+{ echo "$as_me:$LINENO: checking for ${MSPSIM}/dist/mspsim.jar" >&5
+echo $ECHO_N "checking for ${MSPSIM}/dist/mspsim.jar... $ECHO_C" >&6; }
 if { as_var=$as_ac_File; eval "test \"\${$as_var+set}\" = set"; }; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
@@ -2040,7 +2040,7 @@ else
   { { echo "$as_me:$LINENO: error: cannot check for file existence when cross compiling" >&5
 echo "$as_me: error: cannot check for file existence when cross compiling" >&2;}
    { (exit 1); exit 1; }; }
-if test -r "${MSPSIM}/mspsim.jar"; then
+if test -r "${MSPSIM}/dist/mspsim.jar"; then
   eval "$as_ac_File=yes"
 else
   eval "$as_ac_File=no"
@@ -2052,8 +2052,8 @@ echo "${ECHO_T}$ac_res" >&6; }
 if test `eval echo '${'$as_ac_File'}'` = yes; then
   :
 else
-  { { echo "$as_me:$LINENO: error: mspsim.jar not found in ${MSPSIM}; quitting." >&5
-echo "$as_me: error: mspsim.jar not found in ${MSPSIM}; quitting." >&2;}
+  { { echo "$as_me:$LINENO: error: mspsim.jar not found in ${MSPSIM}/dist; quitting." >&5
+echo "$as_me: error: mspsim.jar not found in ${MSPSIM}/dist; quitting." >&2;}
    { (exit 1); exit 1; }; }
 fi
 

@@ -41,8 +41,8 @@ AC_ARG_WITH(mspsim,
 AS_IF([test -n "$with_mspsim"],
 	[MSPSIM="$with_mspsim"],
 	[MSPSIM="/opt/mementos/src/mspsim"])
-AC_CHECK_FILE([${MSPSIM}/mspsim.jar], [],
-	[AC_MSG_ERROR([mspsim.jar not found in ${MSPSIM}; quitting.])])
+AC_CHECK_FILE([${MSPSIM}/dist/mspsim.jar], [],
+	[AC_MSG_ERROR([mspsim.jar not found in ${MSPSIM}/dist; quitting.])])
 
 dnl Verify that the source directory is valid
 AC_CONFIG_SRCDIR(["Makefile.common.in"])
