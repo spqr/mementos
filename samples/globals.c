@@ -14,6 +14,7 @@ int blargh (int x) {
     return (x > argh) ? x : argh;
 }
 
+MEMENTOS_MAIN_ATTRIBUTES
 int main (void) {
     char a = 7;
     int i;

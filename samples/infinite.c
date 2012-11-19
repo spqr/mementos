@@ -10,6 +10,7 @@ void infinite (void) {
     }
 }
 
+MEMENTOS_MAIN_ATTRIBUTES
 int main (void) {
     unsigned int i;
     infinite();

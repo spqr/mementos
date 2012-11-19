@@ -36,6 +36,7 @@ void qsort(int a[], int lo, int hi) {
     }
 }
 
+MEMENTOS_MAIN_ATTRIBUTES
 int main (void) {
     int i;
     qsort(arr, 0, 19);

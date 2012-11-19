@@ -1,6 +1,7 @@
 #include "common.h"
 #include "newmem.h"
 
+MEMENTOS_MAIN_ATTRIBUTES
 int main (void) {
     FCTL3 = FWKEY;
     FCTL1 = FWKEY + WRT;

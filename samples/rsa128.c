@@ -642,6 +642,7 @@ void test_rsa_encrypt(){
 }
 
 
+MEMENTOS_MAIN_ATTRIBUTES
 int main (void) {
     /* see above comment about generating these */
     n[0] = 0xb617; n[1] = 0x4121; n[2] = 0x61af; n[3] = 0x4a25;

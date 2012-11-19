@@ -43,6 +43,7 @@ unsigned int modpow(unsigned int b, unsigned int e, unsigned int m) {
     return (result & 0xFFFFu);
 }
 
+MEMENTOS_MAIN_ATTRIBUTES
 int main( void )
 {
     unsigned long result;

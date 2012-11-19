@@ -7,6 +7,7 @@ void foo (void) {
     }
 }
 
+MEMENTOS_MAIN_ATTRIBUTES
 int main (void) {
     foo();
     return 0;

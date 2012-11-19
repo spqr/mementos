@@ -170,6 +170,7 @@ ifft(int16_t xre[], int16_t xim[], uint16_t n)
   }
 }
 
+MEMENTOS_MAIN_ATTRIBUTES
 int main(void) {
 	int16_t xre[9] = {5,6,7,8,9,10,23,82,52};
 	int16_t xim[9] = {0};

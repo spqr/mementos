@@ -15,6 +15,7 @@ void writes_mnotp (void) {
     //FCTL3 = FWKEY + LOCK;
 }
 
+MEMENTOS_MAIN_ATTRIBUTES
 int main (void) {
     writes_mnotp();
     return 123;

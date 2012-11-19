@@ -36,6 +36,7 @@ void do_crc (void) {
         accumulator += crc16_ccitt((unsigned char *)(0xE000 + i*512), 0x100);
 }
 
+MEMENTOS_MAIN_ATTRIBUTES
 int main (void) {
     do_crc();
     return 27; // to indicate success

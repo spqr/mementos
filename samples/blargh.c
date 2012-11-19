@@ -7,6 +7,7 @@ void blargh () {
     } while (a < 127);
 }
 
+MEMENTOS_MAIN_ATTRIBUTES
 int main (void) {
     blargh();
     return 0;

@@ -168,6 +168,7 @@ int decrypt(uint8_t * cipherBlock, uint8_t * plainBlock)
     return SUCCESS;
 }
 
+MEMENTOS_MAIN_ATTRIBUTES
 int main (void) {
     uint8_t cipher[8];      // ciphertext buffer
     uint8_t key[] = {0x52, 0x69, 0xF1, 0x49, 0xD4, 0x1B, 0xA0, 0x15, 0x24,

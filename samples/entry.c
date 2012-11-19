@@ -14,6 +14,7 @@ void entry (void) {
     subentry();
 }
 
+MEMENTOS_MAIN_ATTRIBUTES
 int main (void) {
     __mementos_set_checkpoint_flag(0xFA00u);
     entry();
