@@ -10,8 +10,8 @@ if (scalar(@ARGV) < 2) {
 my $vthresh = shift;
 my $tinterval = shift;
 while (<>) {
-    # uncomment the V_THRESH line corresponding to the selected voltage
-    if (m{^// #define V_THRESH} and m{\b$vthresh volts$}) {
+    # uncomment the DEFAULT_V_THRESH line corresponding to the selected voltage
+    if (m{^// #define DEFAULT_V_THRESH} and m{\b$vthresh volts$}) {
         s{^// }{};
     }
 

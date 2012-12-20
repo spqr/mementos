@@ -57,42 +57,42 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define INFOMEM_SEGSIZE 64
 #define MAINMEM_SEGSIZE 512
 
-#ifndef V_THRESH
+#ifndef DEFAULT_V_THRESH
 /* in Haskell: map (\x -> (x, round $ 65536 * (x/3.0)/2.5)) [1.8,1.9..5.0] */
-// #define V_THRESH 15729 // 1.8 volts
-// #define V_THRESH 16602 // 1.9 volts
-// #define V_THRESH 17476 // 2.0 volts
-// #define V_THRESH 18350 // 2.1 volts
-// #define V_THRESH 19224 // 2.2 volts
-// #define V_THRESH 20098 // 2.3 volts
-// #define V_THRESH 20972 // 2.4 volts
-// #define V_THRESH 21845 // 2.5 volts
-// #define V_THRESH 22719 // 2.6 volts
-// #define V_THRESH 23593 // 2.7 volts
-// #define V_THRESH 24467 // 2.8 volts
-// #define V_THRESH 25341 // 2.9 volts
-// #define V_THRESH 26214 // 3.0 volts
-// #define V_THRESH 27088 // 3.1 volts
-// #define V_THRESH 27962 // 3.2 volts
-// #define V_THRESH 28836 // 3.3 volts
-// #define V_THRESH 29710 // 3.4 volts
-// #define V_THRESH 30583 // 3.5 volts
-// #define V_THRESH 31457 // 3.6 volts
-// #define V_THRESH 32331 // 3.7 volts
-// #define V_THRESH 33205 // 3.8 volts
-// #define V_THRESH 34079 // 3.9 volts
-// #define V_THRESH 34953 // 4.0 volts
-// #define V_THRESH 35826 // 4.1 volts
-// #define V_THRESH 36700 // 4.2 volts
-// #define V_THRESH 37574 // 4.3 volts
-// #define V_THRESH 38448 // 4.4 volts
-// #define V_THRESH 39322 // 4.5 volts
-// #define V_THRESH 40195 // 4.6 volts
-// #define V_THRESH 41069 // 4.7 volts
-// #define V_THRESH 41943 // 4.8 volts
-// #define V_THRESH 42817 // 4.9 volts
-// #define V_THRESH 43691 // 5.0 volts
-#endif // V_THRESH
+// #define DEFAULT_V_THRESH 15729 // 1.8 volts
+// #define DEFAULT_V_THRESH 16602 // 1.9 volts
+// #define DEFAULT_V_THRESH 17476 // 2.0 volts
+// #define DEFAULT_V_THRESH 18350 // 2.1 volts
+// #define DEFAULT_V_THRESH 19224 // 2.2 volts
+// #define DEFAULT_V_THRESH 20098 // 2.3 volts
+// #define DEFAULT_V_THRESH 20972 // 2.4 volts
+// #define DEFAULT_V_THRESH 21845 // 2.5 volts
+// #define DEFAULT_V_THRESH 22719 // 2.6 volts
+// #define DEFAULT_V_THRESH 23593 // 2.7 volts
+// #define DEFAULT_V_THRESH 24467 // 2.8 volts
+// #define DEFAULT_V_THRESH 25341 // 2.9 volts
+// #define DEFAULT_V_THRESH 26214 // 3.0 volts
+// #define DEFAULT_V_THRESH 27088 // 3.1 volts
+// #define DEFAULT_V_THRESH 27962 // 3.2 volts
+// #define DEFAULT_V_THRESH 28836 // 3.3 volts
+// #define DEFAULT_V_THRESH 29710 // 3.4 volts
+// #define DEFAULT_V_THRESH 30583 // 3.5 volts
+// #define DEFAULT_V_THRESH 31457 // 3.6 volts
+// #define DEFAULT_V_THRESH 32331 // 3.7 volts
+// #define DEFAULT_V_THRESH 33205 // 3.8 volts
+// #define DEFAULT_V_THRESH 34079 // 3.9 volts
+// #define DEFAULT_V_THRESH 34953 // 4.0 volts
+// #define DEFAULT_V_THRESH 35826 // 4.1 volts
+// #define DEFAULT_V_THRESH 36700 // 4.2 volts
+// #define DEFAULT_V_THRESH 37574 // 4.3 volts
+// #define DEFAULT_V_THRESH 38448 // 4.4 volts
+// #define DEFAULT_V_THRESH 39322 // 4.5 volts
+// #define DEFAULT_V_THRESH 40195 // 4.6 volts
+// #define DEFAULT_V_THRESH 41069 // 4.7 volts
+// #define DEFAULT_V_THRESH 41943 // 4.8 volts
+// #define DEFAULT_V_THRESH 42817 // 4.9 volts
+// #define DEFAULT_V_THRESH 43691 // 5.0 volts
+#endif // DEFAULT_V_THRESH
 
 /* silly string functions for stringifying #define'd constants -- don't ask */
 #define xstr(s) str(s)

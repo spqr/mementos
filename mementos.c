@@ -41,6 +41,13 @@ unsigned int tmpsize;
 unsigned int ok_to_checkpoint;
 #endif // MEMENTOS_TIMER
 
+unsigned int V_thresh = DEFAULT_V_THRESH;
+
+/* Stored near the beginning of each checkpoint bundle, this monotonically
+ * increasing uint helps find repeated bundles, indicating stalled progress that
+ * may be treated by adjusting the voltage threshold. */
+unsigned int chkpt_generation;
+
 void __mementos_checkpoint (void) {
     /* Size of globals in bytes.  Count this far from the beginning of RAM to
      * capture globals.  Comes from the AddGlobalSizeGlobal pass. */
@@ -67,7 +74,7 @@ void __mementos_checkpoint (void) {
     }
 #endif // MEMENTOS_TIMER
     /* early exit if voltage check says that checkpoint is unnecessary */
-    if (VOLTAGE_CHECK >= V_THRESH) {
+    if (VOLTAGE_CHECK >= V_thresh) {
         /*
         // reenable interrupts -- but only if they were enabled when we started
         if (interrupts_enabled & 0x8) // GIE bit in SR/R2 (see MSP430 manual)
@@ -148,6 +155,9 @@ void __mementos_checkpoint (void) {
 
     asm volatile ("POP R13");
     asm volatile ("POP R12");
+
+    /********** phase #0b: save generation number. **********/
+    MEMREF(baseaddr + 2) = chkpt_generation;
 
     /********** phase #1: checkpoint registers. **********/
     asm volatile ("MOV &%0, R14" ::"m"(baseaddr));
