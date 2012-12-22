@@ -158,5 +158,13 @@ void Timer_A (void) __attribute__((interrupt(12))); // 0xFFEC for F1611 XXX
 
 #define MEMREF(x) (*((unsigned int*)(x)))
 
+#define BUNDLE_SIZE_REGISTERS 30 // 15 * 2 bytes == 30 bytes
+#define BUNDLE_SIZE_HEADER 4     // stack size (1 byte)
+                                 // + dataseg size (1 byte)
+                                 // + generation number (2 bytes)
+#define BUNDLE_SIZE_MAGIC 2      // 2 bytes for MEMENTOS_MAGIC_NUMBER
+
+#define ROUND_TO_NEXT_EVEN(x) (((x)+1) & 0xFFFEu)
+
 #endif /* __NEWMEM_H__ */
 // vim:ft=c
