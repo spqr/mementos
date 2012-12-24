@@ -94,6 +94,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // #define DEFAULT_V_THRESH 43691 // 5.0 volts
 #endif // DEFAULT_V_THRESH
 
+#define V_THRESH_MIN 15729
+#define V_THRESH_MAX 43691
+#define V_THRESH_DELTA 874 // V_THRESH increment for a 0.1 volt change
+
 /* silly string functions for stringifying #define'd constants -- don't ask */
 #define xstr(s) str(s)
 #define str(s) #s

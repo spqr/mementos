@@ -41,7 +41,7 @@ unsigned int tmpsize;
 unsigned int ok_to_checkpoint;
 #endif // MEMENTOS_TIMER
 
-unsigned int V_thresh = DEFAULT_V_THRESH;
+unsigned int V_thresh;
 
 /* Stored near the beginning of each checkpoint bundle, this monotonically
  * increasing uint helps find repeated bundles, indicating stalled progress that
@@ -238,6 +238,7 @@ void __mementos_restore (unsigned int b) {
     */
 
     chkpt_generation = MEMREF(baseaddr + 2);
+    ++chkpt_generation;
 
     /* restore the stack by walking from the top to the bottom of the stack
      * portion of the checkpoint */
@@ -468,10 +469,14 @@ unsigned int __mementos_locate_next_bundle (unsigned int sp /* hack */) {
 /* walks through the reserved areas looking for the most recent complete
  * checkpoint bundle.  returns either the address of the active bundle or
  * 0xFFFFu if no active bundle is found. */
+/* will adjust V_thresh up or down if necessary. */
 unsigned int __mementos_find_active_bundle (void) {
     unsigned int bun = FIRST_BUNDLE_SEG;
     unsigned int magic, endloc;
     unsigned int candidate = 0xFFFFu; // current candidate for active bundle
+
+    unsigned int gen_num = 0xFFFFu, prev_gen_num = 0;
+
     __mementos_log_event(MEMENTOS_STATUS_FINDING_BUNDLE);
     if (__mementos_segment_is_empty(FIRST_BUNDLE_SEG) ||
             __mementos_segment_marked_erase(FIRST_BUNDLE_SEG)) {
@@ -488,21 +493,36 @@ unsigned int __mementos_find_active_bundle (void) {
                 __mementos_log_event(MEMENTOS_STATUS_DONE_FINDING_BUNDLE);
                 return candidate;
             }
+
+            /* compute the location of the canary.  if the word at this location
+             * is equal to MEMENTOS_MAGIC_NUMBER, then this is a valid
+             * checkpoint bundle. */
             endloc =
                 bun                     // start of bundle
                 + BUNDLE_SIZE_HEADER
                 + BUNDLE_SIZE_REGISTERS
                 + (MEMREF(bun) >> 8)    // size of stack in bytes
                 + (MEMREF(bun) & 0xFF); // size of data segment in bytes
+
             magic = MEMREF(endloc);
             if (magic == MEMENTOS_MAGIC_NUMBER) {
                 /* found a valid bundle */
                 candidate = bun;
+
+                gen_num = MEMREF(bun + 2);
+                if (gen_num == prev_gen_num) {
+                    if (V_thresh > V_THRESH_MIN)
+                        V_thresh -= V_THRESH_DELTA;
+                }
             } else {
                 /* found an abortive bundle.  since we never try to write a
                  * bundle after an abortive bundle (if we did, we wouldn't be
                  * able to find it using our walking technique), this segment is
                  * no longer useful, so we mark it for erasure */
+
+                // bump V_thresh up so checkpoints start earlier next time
+                if (V_thresh < V_THRESH_MAX)
+                    V_thresh += V_THRESH_DELTA;
 
                 /* if the segment starts off with a botched checkpoint, the
                  * whole thing's shot and we should erase it when we get a
@@ -531,15 +551,19 @@ unsigned int __mementos_find_active_bundle (void) {
             __mementos_log_event(MEMENTOS_STATUS_DONE_FINDING_BUNDLE);
             return candidate;
         }
-        endloc = bun
-            + BUNDLE_SIZE_REGISTERS
-            + BUNDLE_SIZE_HEADER
-            + (MEMREF(bun) >> 8)
-            + (MEMREF(bun) & 0xff);
+        endloc = bun + BUNDLE_SIZE_REGISTERS + BUNDLE_SIZE_HEADER
+            + (MEMREF(bun) >> 8) + (MEMREF(bun) & 0xff);
         magic = MEMREF(endloc);
         if (magic == MEMENTOS_MAGIC_NUMBER) {
             candidate = bun;
+            gen_num = MEMREF(bun + 2);
+            if (gen_num == prev_gen_num) {
+                if (V_thresh > V_THRESH_MIN)
+                    V_thresh -= V_THRESH_DELTA;
+            }
         } else {
+            if (V_thresh < V_THRESH_MAX)
+                V_thresh += V_THRESH_DELTA;
             if (bun == FIRST_BUNDLE_SEG) // true on first iteration
                 __mementos_mark_segment_erase(FIRST_BUNDLE_SEG);
             break;
@@ -568,6 +592,7 @@ void __mementos_erase_segment (unsigned int addr_in_segment) {
 
 int main (void) {
     chkpt_generation = 0;
+    V_thresh = DEFAULT_V_THRESH;
 
 #ifdef MEMENTOS_TIMER
     TACCTL0 = CCIE; // CCR0 interrupt enabled
