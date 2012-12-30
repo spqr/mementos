@@ -1,5 +1,5 @@
 CC=msp430-gcc
-CFLAGS=-mmcu=msp430f2132
+CFLAGS=-mmcu=msp430f2618
 SOURCES=$(wildcard *.c)
 EXECUTABLES=$(SOURCES:.c=)
 

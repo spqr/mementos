@@ -8,23 +8,23 @@ unsigned int __mementos_voltage_check (void) {
     unsigned char i = 0;
 
     /* set up the ADC (a la blinky.c) */
-    ADC10CTL0 &= ~ENC;
-    ADC10CTL1 = INCH_VSENSE_IN + ADC10DIV_3;
-    ADC10CTL0 = ADC10SHT_3 + ADC10ON + SREF_1 + REFON;// + REF2_5V;
+    ADC12CTL0 &= ~ENC;
+    ADC12CTL1 = INCH_VSENSE_IN + ADC12DIV_3;
+    ADC12CTL0 = ADC12SHT_3 + ADC12ON + SREF_1 + REFON;// + REF2_5V;
     P3DIR = VSENSE_POWER;
     P3OUT |= VSENSE_POWER; // turn on the WISP's voltage sensing circuit
 
     for (i = 0; i < 50; ++i);
 
-    ADC10CTL0 |= ENC + ADC10SC; // start the ADC sampling
-    while (ADC10CTL1 & ADC10BUSY); // wait while it takes a sample
-    ADC10CTL0 = 0; // turn off ADC
+    ADC12CTL0 |= ENC + ADC12SC; // start the ADC sampling
+    while (ADC12CTL1 & ADC12BUSY); // wait while it takes a sample
+    ADC12CTL0 = 0; // turn off ADC
     P3OUT &= ~VSENSE_POWER; // turn off voltage sensing circuit
 
-    /* ADC10MEM now contains 1024 * ((Vout/3) / 2.5V);
-     * Vout = 3 * 2.5V * ADC10MEM / 1024;
+    /* ADC12MEM now contains 1024 * ((Vout/3) / 2.5V);
+     * Vout = 3 * 2.5V * ADC12MEM / 1024;
      * scale up the 10-bit result to a full unsigned int */
-    return ADC10MEM << 6;
+    return ADC12MEM << 6;
 }
 
 int main (void) {
