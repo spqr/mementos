@@ -27,7 +27,7 @@
 #include "common.h"
 
 #include <math.h>
-#include <signal.h>
+// #include <signal.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
