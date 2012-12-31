@@ -543,6 +543,8 @@ void __mementos_erase_segment (unsigned int addr_in_segment) {
     asm volatile ("EINT"); // XXX should probably *conditionally* reenable here
 }
 
+
+__attribute__((section(".init9"), aligned(2)))
 int main (void) {
 #ifdef MEMENTOS_TIMER
     TACCTL0 = CCIE; // CCR0 interrupt enabled
