@@ -1,4 +1,5 @@
 #include "common.h"
+#include <msp430.h>
 
 /**
  * CRC-16 from WISP firmware 4.1.  Comment from their code follows:
@@ -38,6 +39,8 @@ void do_crc (void) {
 
 MEMENTOS_MAIN_ATTRIBUTES
 int main (void) {
+    WDTCTL = WDTPW + WDTHOLD; // stop WDT
+
     do_crc();
     return 29; // to indicate success
 }

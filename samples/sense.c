@@ -1,7 +1,7 @@
 #include <common.h>
 
 #ifdef __MSP430__
-# include <msp430x16x.h>
+# include <msp430.h>
 #else
 # include <stdio.h>
 #endif // __MSP430__
@@ -157,6 +157,7 @@ void store (void) {
 MEMENTOS_MAIN_ATTRIBUTES
 int main (void) {
 #ifdef __MSP430__
+    WDTCTL = WDTPW + WDTHOLD; // stop WDT
     setup();
     sense();
 #endif // __MSP430__
