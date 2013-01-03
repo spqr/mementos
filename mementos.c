@@ -116,6 +116,8 @@ void __mementos_checkpoint (void) {
             baseaddr = SECOND_BUNDLE_SEG;
         } else {
             /* oh god, neither segment was marked for erasure */
+            __mementos_mark_segment_erase(FIRST_BUNDLE_SEG);
+            __mementos_mark_segment_erase(SECOND_BUNDLE_SEG);
             asm volatile("ADD #30, R1\n\t" // make up for those pushes
                          "RET"); // bail
         }
