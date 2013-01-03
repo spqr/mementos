@@ -1,6 +1,8 @@
 #include "common.h"
 #include <msp430.h>
 
+unsigned int iters;
+
 /**
  * CRC-16 from WISP firmware 4.1.  Comment from their code follows:
  * <quote>
@@ -32,9 +34,8 @@ unsigned short crc16_ccitt_mnotp(volatile unsigned char *data, unsigned short n)
 void do_crc (void) {
     // check the upper halves of eight 512B flash segments
     volatile unsigned short accumulator = 0;
-    unsigned int i;
-    for (i = 0; i < 64; ++i)
-        accumulator += crc16_ccitt_mnotp((unsigned char *)(0xE000 + i*64), 32);
+    for (iters = 0; iters < 64; ++iters)
+        accumulator += crc16_ccitt_mnotp((unsigned char *)(0xE000 + iters*64), 32);
 }
 
 MEMENTOS_MAIN_ATTRIBUTES
