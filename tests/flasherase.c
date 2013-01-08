@@ -1,4 +1,4 @@
-#include <msp430x21x2.h>
+#include <msp430.h>
 #include "test.h"
 
 void flasherase (void) {
@@ -23,4 +23,6 @@ int main (void) {
     P1OUT |= BIT4;
     for (i = 0; i < 50; ++i);
     P1OUT &= ~BIT4;
+
+    return 3;
 }

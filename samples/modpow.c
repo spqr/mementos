@@ -11,6 +11,7 @@
  */
 
 #ifndef __MSP430__
+#include <msp430.h>
 #include <stdio.h>
 #endif // __MSP430__
 
@@ -46,6 +47,10 @@ unsigned int modpow(unsigned int b, unsigned int e, unsigned int m) {
 MEMENTOS_MAIN_ATTRIBUTES
 int main( void )
 {
+#ifdef __MSP430__
+    WDTCTL = WDTPW + WDTHOLD; // stop WDT
+#endif // __MSP430__
+
     unsigned long result;
     unsigned int tmpresult;
     unsigned char i;

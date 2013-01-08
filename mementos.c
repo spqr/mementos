@@ -123,9 +123,10 @@ void __mementos_checkpoint (void) {
             baseaddr = SECOND_BUNDLE_SEG;
         } else {
             /* oh god, neither segment was marked for erasure */
-            asm volatile("ADD #" xstr(BUNDLE_SIZE_REGISTERS)
-                    ", R1\n\t" // make up for those pushes
-                    "RET"); // bail
+            __mementos_mark_segment_erase(FIRST_BUNDLE_SEG);
+            __mementos_mark_segment_erase(SECOND_BUNDLE_SEG);
+            asm volatile("ADD #30, R1\n\t" // make up for those pushes
+                         "RET"); // bail
         }
     }
 
@@ -590,6 +591,8 @@ void __mementos_erase_segment (unsigned int addr_in_segment) {
     asm volatile ("EINT"); // XXX should probably *conditionally* reenable here
 }
 
+
+__attribute__((section(".init9"), aligned(2)))
 int main (void) {
     chkpt_generation = 0;
     V_thresh = DEFAULT_V_THRESH;

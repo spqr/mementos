@@ -16,6 +16,7 @@ typedef char int8_t;
 #define KEYTABLE_SIZE 2 * (RC5_ROUNDS +1)
 
 #include "rc5-crypto-primitives.h"
+#include <msp430.h>
 
 unsigned long S[2*(RC5_ROUNDS+1)];
 
@@ -170,6 +171,8 @@ int decrypt(uint8_t * cipherBlock, uint8_t * plainBlock)
 
 MEMENTOS_MAIN_ATTRIBUTES
 int main (void) {
+    WDTCTL = WDTPW + WDTHOLD; // stop WDT
+
     uint8_t cipher[8];      // ciphertext buffer
     uint8_t key[] = {0x52, 0x69, 0xF1, 0x49, 0xD4, 0x1B, 0xA0, 0x15, 0x24,
         0x97, 0x57, 0x4D, 0x7F, 0x15, 0x31, 0x25};

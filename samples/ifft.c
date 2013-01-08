@@ -1,4 +1,5 @@
 #include "common.h"
+#include <msp430.h>
 
 /*
  * Copyright (c) 2008, Swedish Institute of Computer Science
@@ -172,6 +173,8 @@ ifft(int16_t xre[], int16_t xim[], uint16_t n)
 
 MEMENTOS_MAIN_ATTRIBUTES
 int main(void) {
+    WDTCTL = WDTPW + WDTHOLD; // stop WDT
+
 	int16_t xre[9] = {5,6,7,8,9,10,23,82,52};
 	int16_t xim[9] = {0};
 	int num_samples = 9;

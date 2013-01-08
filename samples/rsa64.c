@@ -27,12 +27,13 @@
 #include "common.h"
 
 #include <math.h>
-#include <signal.h>
+// #include <signal.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
 #include "rsa.h"
+#include <msp430.h>
 
 /*
  * generate a public key and exponent suitable for RSA encryption like this:
@@ -643,6 +644,8 @@ void test_rsa_encrypt(){
 
 MEMENTOS_MAIN_ATTRIBUTES
 int main (void) {
+    WDTCTL = WDTPW + WDTHOLD; // stop WDT
+
     /* see above comment about generating these */
     n[0] = 0xab78; n[1] = 0xafba; n[2] = 0x88e7; n[3] = 0x496d;
     e[0] = 0x0001; e[1] = 0x0001; // e = 65537
