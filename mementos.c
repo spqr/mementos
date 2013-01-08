@@ -162,7 +162,8 @@ void __mementos_checkpoint (void) {
     MEMREF(baseaddr + 2) = chkpt_generation;
 
     /********** phase #1: checkpoint registers (30 bytes) **********/
-    asm volatile ("MOV &%0, R14" ::"m"(baseaddr));
+    asm volatile ("MOV &%0, R14\n\t"
+                  "ADD #2, R14" ::"m"(baseaddr)); // skip over generation number
     asm volatile ("POP 30(R14)\n\t" // R15
                   "POP 28(R14)\n\t" // R14
                   "POP 26(R14)\n\t" // R13
@@ -300,7 +301,8 @@ void __mementos_restore (unsigned int b) {
     asm volatile("afterrd:");                    // jump here when done
 
     /* set baseaddr back to whatever it was */
-    asm volatile("MOV R6, &%0" :"=m"(baseaddr));
+    asm volatile("MOV R6, &%0\n\t"
+                 "ADD #2, R6" :"=m"(baseaddr)); // skip over generation number
 
     /* finally, restore all the registers, starting at R15 and counting down to
      * R0/PC.  setting R0/PC is an implicit jump, so we have to do it last. */
@@ -349,7 +351,7 @@ void __mementos_restore (unsigned int b) {
 
     /* no need to re-enable interrupts; restoring R2 does the right thing
     asm volatile ("EINT\n\t" // re-enable interrupts at the last opportunity */
-    j = MEMREF(baseaddr + 2);
+    j = MEMREF(baseaddr + BUNDLE_SIZE_HEADER);
     asm volatile ("MOV &%0, R0" ::"m"(j)); // implicit jump ... restored!
 }
 
