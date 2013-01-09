@@ -38,15 +38,11 @@ unsigned int i, j, k;
 unsigned int tmpsize;
 // unsigned int interrupts_enabled;
 #ifdef MEMENTOS_TIMER
-unsigned int ok_to_checkpoint;
+bool ok_to_checkpoint;
 #endif // MEMENTOS_TIMER
 
 unsigned int V_thresh;
-
-/* Stored near the beginning of each checkpoint bundle, this monotonically
- * increasing uint helps find repeated bundles, indicating stalled progress that
- * may be treated by adjusting the voltage threshold. */
-unsigned int chkpt_generation;
+unsigned int __mementos_generation;
 
 void __mementos_checkpoint (void) {
     /* Size of globals in bytes.  Count this far from the beginning of RAM to
@@ -158,12 +154,13 @@ void __mementos_checkpoint (void) {
     asm volatile ("POP R13");
     asm volatile ("POP R12");
 
-    /********** phase #0b: save generation number (2 bytes) **********/
-    MEMREF(baseaddr + 2) = chkpt_generation;
+    /********** phase #0b: save V_thresh value & gen # (4 bytes) **********/
+    MEMREF(baseaddr + 2) = __mementos_generation;
+    MEMREF(baseaddr + 4) = V_thresh;
 
     /********** phase #1: checkpoint registers (30 bytes) **********/
     asm volatile ("MOV &%0, R14\n\t"
-                  "ADD #2, R14" ::"m"(baseaddr)); // skip over generation number
+                  "ADD #4, R14" ::"m"(baseaddr)); // skip over gen#, V_thresh
     asm volatile ("POP 30(R14)\n\t" // R15
                   "POP 28(R14)\n\t" // R14
                   "POP 26(R14)\n\t" // R13
@@ -239,9 +236,6 @@ void __mementos_restore (unsigned int b) {
     asm volatile ("DINT");
     */
 
-    chkpt_generation = MEMREF(baseaddr + 2);
-    ++chkpt_generation;
-
     /* restore the stack by walking from the top to the bottom of the stack
      * portion of the checkpoint */
     tmpsize = MEMREF(baseaddr) >> 8; // stack size
@@ -302,7 +296,7 @@ void __mementos_restore (unsigned int b) {
 
     /* set baseaddr back to whatever it was */
     asm volatile("MOV R6, &%0\n\t"
-                 "ADD #2, R6" :"=m"(baseaddr)); // skip over generation number
+                 "ADD #4, R6" :"=m"(baseaddr)); // skip over gen#, V_thresh
 
     /* finally, restore all the registers, starting at R15 and counting down to
      * R0/PC.  setting R0/PC is an implicit jump, so we have to do it last. */
@@ -394,7 +388,7 @@ unsigned int __mementos_locate_next_bundle (unsigned int sp /* hack */) {
         + BUNDLE_SIZE_MAGIC; // bytes for the magic number
 
     /* where does the currently active bundle start? */
-    baseaddr = __mementos_find_active_bundle();
+    baseaddr = __mementos_find_active_bundle(__mementos_generation);
     if (baseaddr == 0xFFFFu) {
         if (__mementos_segment_is_empty(FIRST_BUNDLE_SEG))
             return FIRST_BUNDLE_SEG;
@@ -472,13 +466,16 @@ unsigned int __mementos_locate_next_bundle (unsigned int sp /* hack */) {
 /* walks through the reserved areas looking for the most recent complete
  * checkpoint bundle.  returns either the address of the active bundle or
  * 0xFFFFu if no active bundle is found. */
-/* will adjust V_thresh up or down if necessary. */
-unsigned int __mementos_find_active_bundle (void) {
+unsigned int __mementos_find_active_bundle (unsigned int generation) {
     unsigned int bun = FIRST_BUNDLE_SEG;
     unsigned int magic, endloc;
     unsigned int candidate = 0xFFFFu; // current candidate for active bundle
 
-    unsigned int gen_num = 0xFFFFu, prev_gen_num = 0;
+    /* count how many bundles there are with same V_thresh.  if >1, adjust
+     * V_thresh downward. */
+    unsigned int prev_V_thresh = 0xFFFFu;
+    unsigned int prev_generation = 0xFFFFu;
+    bool should_decrease_V_thresh = 0;
 
     __mementos_log_event(MEMENTOS_STATUS_FINDING_BUNDLE);
     if (__mementos_segment_is_empty(FIRST_BUNDLE_SEG) ||
@@ -512,20 +509,23 @@ unsigned int __mementos_find_active_bundle (void) {
                 /* found a valid bundle */
                 candidate = bun;
 
-                gen_num = MEMREF(bun + 2);
-                if (gen_num == prev_gen_num) {
-                    if (V_thresh > V_THRESH_MIN)
-                        V_thresh -= V_THRESH_DELTA;
+                if ((MEMREF(bun + VTHRESH_OFFSET) == prev_V_thresh)
+                        && (MEMREF(bun + GENERATION_OFFSET) == prev_generation))
+                {
+                    /* two or more bundles with same V_thresh in the same prior
+                     * generation means we can decrease V_thresh for this
+                     * generation and start checkpointing later. */
+                    should_decrease_V_thresh = 1;
+                } else {
+                    should_decrease_V_thresh = 0;
                 }
+                prev_generation = MEMREF(bun + GENERATION_OFFSET);
+                prev_V_thresh = MEMREF(bun + VTHRESH_OFFSET);
             } else {
                 /* found an abortive bundle.  since we never try to write a
                  * bundle after an abortive bundle (if we did, we wouldn't be
                  * able to find it using our walking technique), this segment is
                  * no longer useful, so we mark it for erasure */
-
-                // bump V_thresh up so checkpoints start earlier next time
-                if (V_thresh < V_THRESH_MAX)
-                    V_thresh += V_THRESH_DELTA;
 
                 /* if the segment starts off with a botched checkpoint, the
                  * whole thing's shot and we should erase it when we get a
@@ -540,9 +540,31 @@ unsigned int __mementos_find_active_bundle (void) {
             bun = endloc + 2 /* skip over 2-byte magic number */;
         } while (bun < (SECOND_BUNDLE_SEG + MAINMEM_SEGSIZE));
 
-        if (candidate != 0xFFFFu &&
-            !__mementos_segment_is_empty(FIRST_BUNDLE_SEG))
-            __mementos_mark_segment_erase(FIRST_BUNDLE_SEG);
+        if (candidate != 0xFFFFu) {
+            if (!__mementos_segment_is_empty(FIRST_BUNDLE_SEG)) {
+                __mementos_mark_segment_erase(FIRST_BUNDLE_SEG);
+            }
+
+            if (generation == 0xFFFFu) {
+                /* no checkpoints have been found thus far from the current
+                 * lifecycle, so set the generation # for future checkpoints
+                 * occurring later in this lifecycle... */
+                generation = MEMREF(candidate + GENERATION_OFFSET);
+                __mementos_generation = ++generation;
+
+                /* ... and set V_thresh to its most recently checkpointed
+                 * value, for checkpointing later in this lifecycle... */
+                V_thresh = prev_V_thresh;
+                /* ... decreasing it if it was too high last time. */
+                if (should_decrease_V_thresh) {
+                    V_thresh -= V_THRESH_DELTA;
+                }
+            } else {
+                /* found checkpoints from this lifecycle.  don't decrease
+                 * V_thresh now, though; let excessive checkpointing be detected
+                 * in the next lifecycle. */
+            }
+        }
 
         __mementos_log_event(MEMENTOS_STATUS_DONE_FINDING_BUNDLE);
         return candidate;
@@ -559,14 +581,7 @@ unsigned int __mementos_find_active_bundle (void) {
         magic = MEMREF(endloc);
         if (magic == MEMENTOS_MAGIC_NUMBER) {
             candidate = bun;
-            gen_num = MEMREF(bun + 2);
-            if (gen_num == prev_gen_num) {
-                if (V_thresh > V_THRESH_MIN)
-                    V_thresh -= V_THRESH_DELTA;
-            }
         } else {
-            if (V_thresh < V_THRESH_MAX)
-                V_thresh += V_THRESH_DELTA;
             if (bun == FIRST_BUNDLE_SEG) // true on first iteration
                 __mementos_mark_segment_erase(FIRST_BUNDLE_SEG);
             break;
@@ -574,9 +589,20 @@ unsigned int __mementos_find_active_bundle (void) {
         bun = endloc + BUNDLE_SIZE_MAGIC; // skip magic number
     } while (bun < FIRST_BUNDLE_SEG + MAINMEM_SEGSIZE);
 
-    if (candidate != 0xFFFFu &&
-            !__mementos_segment_is_empty(SECOND_BUNDLE_SEG))
-        __mementos_mark_segment_erase(SECOND_BUNDLE_SEG);
+    if (candidate != 0xFFFFu) {
+        if (!__mementos_segment_is_empty(SECOND_BUNDLE_SEG)) {
+            __mementos_mark_segment_erase(SECOND_BUNDLE_SEG);
+        }
+        if (generation == 0xFFFFu) {
+            generation = MEMREF(candidate + GENERATION_OFFSET);
+            __mementos_generation = ++generation;
+            V_thresh = prev_V_thresh;
+            if (should_decrease_V_thresh) {
+                V_thresh -= V_THRESH_DELTA;
+            }
+        } else {
+        }
+    }
 
     __mementos_log_event(MEMENTOS_STATUS_DONE_FINDING_BUNDLE);
     return candidate;
@@ -596,8 +622,8 @@ void __mementos_erase_segment (unsigned int addr_in_segment) {
 
 __attribute__((section(".init9"), aligned(2)))
 int main (void) {
-    chkpt_generation = 0;
     V_thresh = DEFAULT_V_THRESH;
+    __mementos_generation = 0xFFFFu;
 
 #ifdef MEMENTOS_TIMER
     TACCTL0 = CCIE; // CCR0 interrupt enabled
@@ -627,7 +653,7 @@ int main (void) {
         __mementos_erase_segment(SECOND_BUNDLE_SEG);
     }
 
-    i = __mementos_find_active_bundle();
+    i = __mementos_find_active_bundle(__mementos_generation);
     if ((i >= FIRST_BUNDLE_SEG) && (i < SECOND_BUNDLE_SEG + MAINMEM_SEGSIZE)) {
         /* there's an active bundle inside one of the reserved segments */
         if (i < SECOND_BUNDLE_SEG) {
@@ -644,6 +670,9 @@ int main (void) {
 
         __mementos_restore(i);
         return 13; // shouldn't happen!  return 13 indicates bad luck.
+    } else {
+        // no active bundle -- start from scratch
+        __mementos_generation = 0;
     }
 
     /* invoke the original program */
@@ -686,7 +715,7 @@ unsigned int __mementos_voltage_check (void) {
     /* ADC10MEM now contains 1024 * ((Vout/3) / 2.5V);
      * Vout = 3 * 2.5V * ADC10MEM / 1024;
      * scale up the 10-bit result to a full unsigned int */
-    return ADC10MEM << 6;
+    return ADC10MEM; // << 6; // XXX why "scale up"?
 }
 #endif // MEMENTOS_HARDWARE
 

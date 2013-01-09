@@ -110,7 +110,7 @@ void __mementos_mark_segment_erase (unsigned int);
 unsigned int __mementos_segment_is_empty (unsigned int);
 unsigned int __mementos_segment_marked_erase (unsigned int);
 unsigned int __mementos_locate_next_bundle (unsigned int);
-unsigned int __mementos_find_active_bundle (void);
+unsigned int __mementos_find_active_bundle (unsigned int);
 
 #ifdef MEMENTOS_LOGGING
 # define MEMENTOS_STATUS_STARTING_CHECKPOINT 0x1
@@ -163,12 +163,21 @@ void Timer_A (void) __attribute__((interrupt(12))); // 0xFFEC for F1611 XXX
 #define MEMREF(x) (*((unsigned int*)(x)))
 
 #define BUNDLE_SIZE_REGISTERS 30 // 15 * 2 bytes == 30 bytes
-#define BUNDLE_SIZE_HEADER 4     // stack size (1 byte)
+#define BUNDLE_SIZE_HEADER 6     // stack size (1 byte)
                                  // + dataseg size (1 byte)
                                  // + generation number (2 bytes)
+                                 // + V_thresh (2 bytes)
 #define BUNDLE_SIZE_MAGIC 2      // 2 bytes for MEMENTOS_MAGIC_NUMBER
 
+// distances from start of bundle...
+#define GENERATION_OFFSET 2
+#define VTHRESH_OFFSET 4
+#define REGISTERS_OFFSET BUNDLE_SIZE_HEADER
+#define STACK_OFFSET (BUNDLE_SIZE_HEADER + BUNDLE_SIZE_REGISTERS)
+
 #define ROUND_TO_NEXT_EVEN(x) (((x)+1) & 0xFFFEu)
+
+typedef unsigned char bool;
 
 #endif /* __NEWMEM_H__ */
 // vim:ft=c
