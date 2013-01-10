@@ -40,10 +40,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #error Unsupported compiler; use either mspgcc or Clang.
 #endif
 
-#if (!defined(__msp430x21x1) && \
-        !defined(__msp430x21x2) && \
-        !defined(__msp430x16x) && \
-        !defined(__msp430x26x))
+#if (!defined(__MSP430F2131__) && \
+        !defined(__MSP430F2132__) && \
+        !defined(__MSP430F1611__) && \
+        !defined(__MSP430F2618__))
 #error Unsupported hardware; see mementos.h.
 #endif
 
@@ -52,8 +52,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif // MEMENTOS_HARDWARE
 
 /* where do the segments to which we can write checkpoint bundles start? */
+#ifdef __MSP430F2618__
+#define FIRST_BUNDLE_SEG 0xF900
+#define SECOND_BUNDLE_SEG 0xFB00
+#else
 #define FIRST_BUNDLE_SEG 0xFA00u
 #define SECOND_BUNDLE_SEG 0xFC00u
+#endif // __MSP430F2618__
 #define INFOMEM_SEGSIZE 64
 #define MAINMEM_SEGSIZE 512
 
@@ -141,16 +146,16 @@ extern volatile unsigned int VOLTAGE_CHECK asm("0x01C0");
 #define MEMENTOS_MAGIC_NUMBER 0xBEADu
 
 /* horrible cheating hackery */
-#ifdef __msp430x21x1
+#ifdef __MSP430F2131__
 #define TOPOFSTACK 0x0300
 #define STARTOFDATA 0x0200
-#elif defined(__msp430x21x2)
+#elif defined(__MSP430F2132__)
 #define TOPOFSTACK 0x0400
 #define STARTOFDATA 0x0200
-#elif defined(__msp430x16x)
+#elif defined(__MSP430F1611__)
 #define TOPOFSTACK 0x3900
 #define STARTOFDATA 0x1100
-#elif defined(__msp430x26x)
+#elif defined(__MSP430F2618__)
 #define TOPOFSTACK 0x3100
 #define STARTOFDATA 0x1100
 #endif
