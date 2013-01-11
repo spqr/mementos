@@ -715,7 +715,7 @@ unsigned int __mementos_voltage_check (void) {
     /* ADC10MEM now contains 1024 * ((Vout/3) / 2.5V);
      * Vout = 3 * 2.5V * ADC10MEM / 1024;
      * scale up the 10-bit result to a full unsigned int */
-    return ADC10MEM; // << 6; // XXX why "scale up"?
+    return ADC10MEM << 6;
 }
 #endif // MEMENTOS_HARDWARE
 
