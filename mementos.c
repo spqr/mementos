@@ -59,28 +59,24 @@ void __mementos_checkpoint (void) {
 
 #ifndef MEMENTOS_ORACLE // always checkpoint when called in oracle mode
 #ifdef MEMENTOS_TIMER
-    /* early exit if not ok to checkpoint */
-    if (!ok_to_checkpoint) {
-        /*
-        // reenable interrupts -- but only if they were enabled when we started
-        if (interrupts_enabled & 0x8) // GIE bit in SR/R2 (see MSP430 manual)
-            asm volatile ("EINT");
-        */
-        return;
-    }
+    asm("CMP #0, &%0\n\t"
+        "JNE oktochkpt\n\t"
+        "RET\n\t"
+        "oktochkpt:\n\t"
+        "CMP &%2,&%1\n\t"
+        "JC aftervcheck\n\t"
+        "CLR &%0\n\t"
+        "RET\n\t"
+        "aftervcheck:"
+        :"=m"(ok_to_checkpoint)
+        :"m"(VOLTAGE_CHECK),"m"(V_thresh));
+#else
+    asm("CMP &%1,&%0\n\t"
+        "JC aftervcheck\n\t"
+        "RET\n\t"
+        "aftervcheck:"
+        ::"m"(VOLTAGE_CHECK),"m"(V_thresh));
 #endif // MEMENTOS_TIMER
-    /* early exit if voltage check says that checkpoint is unnecessary */
-    if (VOLTAGE_CHECK >= V_thresh) {
-        /*
-        // reenable interrupts -- but only if they were enabled when we started
-        if (interrupts_enabled & 0x8) // GIE bit in SR/R2 (see MSP430 manual)
-            asm volatile ("EINT");
-        */
-#ifdef MEMENTOS_TIMER
-        ok_to_checkpoint = 0; // put the flag back down
-#endif // MEMENTOS_TIMER
-        asm volatile ("RET"); // would 'return', but that triggers a bug XXX
-    }
 #endif // MEMENTOS_ORACLE
     __mementos_log_event(MEMENTOS_STATUS_STARTING_CHECKPOINT);
 
@@ -530,7 +526,7 @@ unsigned int __mementos_find_active_bundle (unsigned int generation) {
                 /* if the segment starts off with a botched checkpoint, the
                  * whole thing's shot and we should erase it when we get a
                  * chance */
-                if (bun == SECOND_BUNDLE_SEG)
+                // if (bun == SECOND_BUNDLE_SEG)
                     __mementos_mark_segment_erase(SECOND_BUNDLE_SEG);
                 /* else consider the previous bundle the active one (candidate
                  * points at the most recently validated bundle) */
@@ -582,7 +578,7 @@ unsigned int __mementos_find_active_bundle (unsigned int generation) {
         if (magic == MEMENTOS_MAGIC_NUMBER) {
             candidate = bun;
         } else {
-            if (bun == FIRST_BUNDLE_SEG) // true on first iteration
+            // if (bun == FIRST_BUNDLE_SEG) // true on first iteration
                 __mementos_mark_segment_erase(FIRST_BUNDLE_SEG);
             break;
         }
