@@ -59,23 +59,29 @@ void __mementos_checkpoint (void) {
 
 #ifndef MEMENTOS_ORACLE // always checkpoint when called in oracle mode
 #ifdef MEMENTOS_TIMER
-    asm("CMP #0, &%0\n\t"
-        "JNE oktochkpt\n\t"
-        "RET\n\t"
-        "oktochkpt:\n\t"
-        "CMP &%2,&%1\n\t"
-        "JC aftervcheck\n\t"
-        "CLR &%0\n\t"
-        "RET\n\t"
-        "aftervcheck:"
-        :"=m"(ok_to_checkpoint)
-        :"m"(VOLTAGE_CHECK),"m"(V_thresh));
+    asm volatile("CMP #0, &%0\n\t"
+                "JNE oktochkpt\n\t"
+                "RET\n\t"
+                "oktochkpt:\n\t"
+                "PUSH R12\n\t"
+                "MOV &%1, R12\n\t"
+                "CMP &%2, R12\n\t"
+                "JC aftervcheck\n\t"
+                "CLR &%0\n\t"
+                "RET\n\t"
+                "aftervcheck:"
+                :"=m"(ok_to_checkpoint)
+                :"m"(VOLTAGE_CHECK),"m"(V_thresh));
 #else
-    asm("CMP &%1,&%0\n\t"
-        "JC aftervcheck\n\t"
-        "RET\n\t"
-        "aftervcheck:"
-        ::"m"(VOLTAGE_CHECK),"m"(V_thresh));
+    asm volatile ("PUSH R12\n\t"
+                  "MOV &%0, R12\n\t"
+                  "CMP &%1, R12\n\t"
+                  "JC aftervcheck\n\t"
+                  "POP R12\n\t"
+                  "RET\n\t"
+                  "aftervcheck:\n\t"
+                  "POP R12"
+                  ::"m"(V_thresh), "m"(VOLTAGE_CHECK));
 #endif // MEMENTOS_TIMER
 #endif // MEMENTOS_ORACLE
     __mementos_log_event(MEMENTOS_STATUS_STARTING_CHECKPOINT);
