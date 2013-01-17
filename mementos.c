@@ -632,13 +632,12 @@ int main (void) {
 
     __mementos_log_event(MEMENTOS_STATUS_HELLO);
 
-    /* super-quick check at boot time; may result in the erasure of at most one
-     * flash segment */
-    if (__mementos_segment_marked_erase(FIRST_BUNDLE_SEG)) {
+    /* super-quick check at boot time; may result in the erasure of one or both
+     * flash segments */
+    if (__mementos_segment_marked_erase(FIRST_BUNDLE_SEG))
         __mementos_erase_segment(FIRST_BUNDLE_SEG);
-    } else if (__mementos_segment_marked_erase(SECOND_BUNDLE_SEG)) {
+    if (__mementos_segment_marked_erase(SECOND_BUNDLE_SEG))
         __mementos_erase_segment(SECOND_BUNDLE_SEG);
-    }
 
     i = __mementos_find_active_bundle(__mementos_generation);
     if ((i >= FIRST_BUNDLE_SEG) && (i < SECOND_BUNDLE_SEG + MAINMEM_SEGSIZE)) {
