@@ -470,6 +470,7 @@ unsigned int __mementos_locate_next_bundle (unsigned int sp /* hack */) {
  * 0xFFFFu if no active bundle is found. */
 unsigned int __mementos_find_active_bundle (unsigned int generation) {
     unsigned int bun = FIRST_BUNDLE_SEG;
+    unsigned int pri_segment, alt_segment;
     unsigned int magic, endloc;
     unsigned int candidate = 0xFFFFu; // current candidate for active bundle
 
@@ -478,15 +479,21 @@ unsigned int __mementos_find_active_bundle (unsigned int generation) {
     unsigned int prev_V_thresh = 0xFFFFu;
     unsigned int prev_generation = 0xFFFFu;
     bool should_decrease_V_thresh = 0;
+    bool should_increase_V_thresh = 0;
 
     __mementos_log_event(MEMENTOS_STATUS_FINDING_BUNDLE);
     if (__mementos_segment_is_empty(FIRST_BUNDLE_SEG) ||
             __mementos_segment_marked_erase(FIRST_BUNDLE_SEG)) {
-        // FIRST_BUNDLE_SEG does not contain an active bundle, so look in 2nd
-        bun = SECOND_BUNDLE_SEG;
+
+        pri_segment = SECOND_BUNDLE_SEG;
+        alt_segment = FIRST_BUNDLE_SEG;
+
+searchbundle:
+        // alt_segment does not contain an active bundle, so look in 2nd
+        bun = pri_segment;
         do {
             /* on this loop's first iteration, candidate == 0xFFFFu; if there's
-             * no bundle at SECOND_BUNDLE_SEG, there's no active bundle, so
+             * no bundle at pri_segment, there's no active bundle, so
              * return candidate */
             if (MEMREF(bun) == 0xFFFFu) {
                 /* found a blank where a bundle header should be, so we've hit
@@ -521,6 +528,7 @@ unsigned int __mementos_find_active_bundle (unsigned int generation) {
                 } else {
                     should_decrease_V_thresh = 0;
                 }
+                should_increase_V_thresh = 0;
                 prev_generation = MEMREF(bun + GENERATION_OFFSET);
                 prev_V_thresh = MEMREF(bun + VTHRESH_OFFSET);
             } else {
@@ -532,39 +540,48 @@ unsigned int __mementos_find_active_bundle (unsigned int generation) {
                 /* if the segment starts off with a botched checkpoint, the
                  * whole thing's shot and we should erase it when we get a
                  * chance */
-                // if (bun == SECOND_BUNDLE_SEG)
-                    __mementos_mark_segment_erase(SECOND_BUNDLE_SEG);
+                // if (bun == pri_segment)
+                    __mementos_mark_segment_erase(pri_segment);
                 /* else consider the previous bundle the active one (candidate
                  * points at the most recently validated bundle) */
+
+                // increase V_thresh to start checkpointing earlier next time
+                should_increase_V_thresh = 1;
+                should_decrease_V_thresh = 0;
 
                 break;
             }
             bun = endloc + 2 /* skip over 2-byte magic number */;
-        } while (bun < (SECOND_BUNDLE_SEG + MAINMEM_SEGSIZE));
+        } while (bun < (pri_segment + MAINMEM_SEGSIZE));
 
         if (candidate != 0xFFFFu) {
-            if (!__mementos_segment_is_empty(FIRST_BUNDLE_SEG)) {
-                __mementos_mark_segment_erase(FIRST_BUNDLE_SEG);
+            // don't need the other segment's data anymore
+            if (!__mementos_segment_is_empty(alt_segment)) {
+                __mementos_mark_segment_erase(alt_segment);
             }
+
+            prev_generation = MEMREF(candidate + GENERATION_OFFSET);
+            prev_V_thresh = MEMREF(candidate + VTHRESH_OFFSET);
 
             if (generation == 0xFFFFu) {
                 /* no checkpoints have been found thus far from the current
                  * lifecycle, so set the generation # for future checkpoints
                  * occurring later in this lifecycle... */
-                generation = MEMREF(candidate + GENERATION_OFFSET);
-                __mementos_generation = ++generation;
-
-                /* ... and set V_thresh to its most recently checkpointed
-                 * value, for checkpointing later in this lifecycle... */
-                V_thresh = prev_V_thresh;
-                /* ... decreasing it if it was too high last time. */
-                if (should_decrease_V_thresh) {
-                    V_thresh -= V_THRESH_DELTA;
-                }
+                __mementos_generation = prev_generation + 1;
             } else {
                 /* found checkpoints from this lifecycle.  don't decrease
                  * V_thresh now, though; let excessive checkpointing be detected
                  * in the next lifecycle. */
+            }
+
+            /* set V_thresh to its most recently checkpointed value, for
+             * checkpointing later in this lifecycle... */
+            V_thresh = prev_V_thresh;
+            /* ... decreasing it if it was too high last time. */
+            if (should_decrease_V_thresh) {
+                V_thresh -= V_THRESH_DELTA;
+            } else if (should_increase_V_thresh) {
+                V_thresh += V_THRESH_DELTA;
             }
         }
 
@@ -573,41 +590,9 @@ unsigned int __mementos_find_active_bundle (unsigned int generation) {
     }
 
     // if we reach this point, the first bundle may contain an active bundle
-    do {
-        if (MEMREF(bun) == 0xFFFFu) {
-            __mementos_log_event(MEMENTOS_STATUS_DONE_FINDING_BUNDLE);
-            return candidate;
-        }
-        endloc = bun + BUNDLE_SIZE_REGISTERS + BUNDLE_SIZE_HEADER
-            + (MEMREF(bun) >> 8) + (MEMREF(bun) & 0xff);
-        magic = MEMREF(endloc);
-        if (magic == MEMENTOS_MAGIC_NUMBER) {
-            candidate = bun;
-        } else {
-            // if (bun == FIRST_BUNDLE_SEG) // true on first iteration
-                __mementos_mark_segment_erase(FIRST_BUNDLE_SEG);
-            break;
-        }
-        bun = endloc + BUNDLE_SIZE_MAGIC; // skip magic number
-    } while (bun < FIRST_BUNDLE_SEG + MAINMEM_SEGSIZE);
-
-    if (candidate != 0xFFFFu) {
-        if (!__mementos_segment_is_empty(SECOND_BUNDLE_SEG)) {
-            __mementos_mark_segment_erase(SECOND_BUNDLE_SEG);
-        }
-        if (generation == 0xFFFFu) {
-            generation = MEMREF(candidate + GENERATION_OFFSET);
-            __mementos_generation = ++generation;
-            V_thresh = prev_V_thresh;
-            if (should_decrease_V_thresh) {
-                V_thresh -= V_THRESH_DELTA;
-            }
-        } else {
-        }
-    }
-
-    __mementos_log_event(MEMENTOS_STATUS_DONE_FINDING_BUNDLE);
-    return candidate;
+    pri_segment = FIRST_BUNDLE_SEG;
+    alt_segment = SECOND_BUNDLE_SEG;
+    goto searchbundle;
 }
 
 /* erases the segment containing the address addr_in_segment */
