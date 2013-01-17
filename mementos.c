@@ -286,7 +286,7 @@ void __mementos_restore (unsigned int b) {
     asm volatile("CMP R8, R9\n\t"                // if (i(R9) >= globalsize(R8))
                  "JC afterrd");                  //   <stop looping>
     asm volatile("MOV R6, R10\n\t"               // R10 = baseaddr(R6)
-                 "ADD #34, R10\n\t"              //   + 34 // skip regs, header,
+                 "ADD #" xstr(STACK_OFFSET) ", R10\n\t"              //   + 34 // skip regs, header,
                  "ADD R7, R10\n\t"               //   + stacksize(R7) // stack,
                  "ADD R9, R10");                 //   + i(R9)
     asm volatile("MOV @R10, "                    // MEMREF(STARTOFDATA+i(R9)) =
