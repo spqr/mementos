@@ -497,10 +497,8 @@ searchbundle:
              * return candidate */
             if (MEMREF(bun) == 0xFFFFu) {
                 /* found a blank where a bundle header should be, so we've hit
-                 * the end of bundles in this segment; return the current
-                 * position */
-                __mementos_log_event(MEMENTOS_STATUS_DONE_FINDING_BUNDLE);
-                return candidate;
+                 * the end of bundles in this segment; done looking. */
+                break;
             }
 
             /* compute the location of the canary.  if the word at this location
