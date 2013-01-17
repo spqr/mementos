@@ -53,6 +53,16 @@ MementosSizeGlobals::MementosSizeGlobals() : ModulePass(ID) {
   NumBytesRequired = TotalSizeInBytes = 0;
 }
 
+bool shouldSkipGlobal (const StringRef sr) {
+  // skip address-pinned globals
+  if (sr.find("0x") == 0) return true; // addr-pinned global
+
+  // skip MSP430 watchdog timer control register
+  if (sr.find("__WDTCTL") != StringRef::npos) return true;
+
+  return false;
+}
+
 bool MementosSizeGlobals::runOnModule (Module &M) {
   TD = getAnalysisIfAvailable<TargetData>();
   for (Module::const_global_iterator i = M.global_begin();
@@ -61,8 +71,8 @@ bool MementosSizeGlobals::runOnModule (Module &M) {
     const unsigned int bytes = TD->getTypeAllocSize(T);
     const StringRef s = i->getName();
     DEBUG(outs() << "Found a global of size " << bytes << " (" << s << ")\n");
-    if (s.find("0x") != StringRef::npos) {
-      DEBUG(outs() << "Skipping fake global with name \"" << s << "\"\n");
+    if (shouldSkipGlobal(s)) {
+      DEBUG(outs() << "Skipping global \"" << s << "\"\n");
     } else {
       TotalSizeInBytes += bytes;
     }
