@@ -38,7 +38,7 @@ unsigned int i, j, k;
 unsigned int tmpsize;
 // unsigned int interrupts_enabled;
 #ifdef MEMENTOS_TIMER
-unsigned int ok_to_checkpoint;
+bool ok_to_checkpoint;
 #endif // MEMENTOS_TIMER
 
 void __mementos_checkpoint (void) {
@@ -128,7 +128,7 @@ void __mementos_checkpoint (void) {
     FCTL3 = FWKEY;
     FCTL1 = FWKEY + WRT;
 
-    /********** phase #0: save size header. **********/
+    /********** phase #0: save size header (2 bytes) **********/
     asm volatile ("PUSH R12");
     asm volatile ("PUSH R13");
 
@@ -165,6 +165,7 @@ void __mementos_checkpoint (void) {
                   "POP 12(R14)\n\t" // R6
                   "POP 10(R14)\n\t" // R5
                   "POP 8(R14)\n\t"  // R4
+                  // skip R3 (constant generator)
                   "POP 6(R14)\n\t"  // R2
                   "POP 4(R14)\n\t"  // R1
                   "POP 2(R14)");    // R0
@@ -175,13 +176,13 @@ void __mementos_checkpoint (void) {
     i = j;
     j = TOPOFSTACK - i;
     while ((TOPOFSTACK - i) > 0) { // walk up from SP to ToS & copy to flash
-        MEMREF((baseaddr + 32 + j-(TOPOFSTACK-i))) = MEMREF(i);
+        MEMREF((baseaddr + BUNDLE_SIZE_HEADER + BUNDLE_SIZE_REGISTERS + j-(TOPOFSTACK-i))) = MEMREF(i);
         i += 2;
     }
 
     /* checkpoint as much of the data segment as is necessary */
-    j += 32; // skip over the stack we just checkpointed
-    for (i = STARTOFDATA; i < STARTOFDATA+((GlobalAllocSize+1) & 0xFFFEu);
+    j += BUNDLE_SIZE_HEADER + BUNDLE_SIZE_REGISTERS;
+    for (i = STARTOFDATA; i < STARTOFDATA+ROUND_TO_NEXT_EVEN(GlobalAllocSize);
             i += 2, j += 2) {
         MEMREF(baseaddr + j) = MEMREF(i);
     }
@@ -242,7 +243,7 @@ void __mementos_restore (unsigned int b) {
 
         // k = baseaddr; k += 30; k += tmpsize; k -= i;
         asm volatile("MOV &%1, &%0" :"=m"(k) :"m"(baseaddr));
-        asm volatile("ADD #30, &%0" ::"m"(k));
+        asm volatile("ADD #" xstr(BUNDLE_SIZE_REGISTERS) ", &%0" ::"m"(k));
         asm volatile("ADD &%1, &%0" :"=m"(k) :"m"(tmpsize));
         asm volatile("SUB &%1, &%0" :"=m"(k) :"m"(i));
 
@@ -275,7 +276,7 @@ void __mementos_restore (unsigned int b) {
     asm volatile("CMP R8, R9\n\t"                // if (i(R9) >= globalsize(R8))
                  "JC afterrd");                  //   <stop looping>
     asm volatile("MOV R6, R10\n\t"               // R10 = baseaddr(R6)
-                 "ADD #32, R10\n\t"              //   + 32 // skip regs, header,
+                 "ADD #" xstr(STACK_OFFSET) ", R10\n\t"              //   + 32 // skip regs, header,
                  "ADD R7, R10\n\t"               //   + stacksize(R7) // stack,
                  "ADD R9, R10");                 //   + i(R9)
     asm volatile("MOV @R10, "                    // MEMREF(STARTOFDATA+i(R9)) =
@@ -335,13 +336,13 @@ void __mementos_restore (unsigned int b) {
 
     /* no need to re-enable interrupts; restoring R2 does the right thing
     asm volatile ("EINT\n\t" // re-enable interrupts at the last opportunity */
-    j = MEMREF(baseaddr + 2);
+    j = MEMREF(baseaddr + BUNDLE_SIZE_HEADER);
     asm volatile ("MOV &%0, R0" ::"m"(j)); // implicit jump ... restored!
 }
 
 unsigned int __mementos_segment_is_empty (unsigned int addr) {
     unsigned int a;
-#define STRIDE 32
+#define STRIDE (BUNDLE_SIZE_HEADER + BUNDLE_SIZE_REGISTERS)
     for (a = addr; a < (addr+MAINMEM_SEGSIZE); a += STRIDE) {
         if (MEMREF(a) != 0xFFFFu) return 0;
     }
@@ -371,11 +372,11 @@ unsigned int __mementos_locate_next_bundle (unsigned int sp /* hack */) {
 
     /* how big is the bundle we'd like to store? */
     size =
-        2 // bytes for the bundle header
-        + 30 // bytes for the register portion
+        BUNDLE_SIZE_HEADER // bytes for the bundle header
+        + BUNDLE_SIZE_REGISTERS // bytes for the register portion
         + (TOPOFSTACK - sp) // bytes for the stack portion
-        + ((GlobalAllocSize+1) & 0xFFFEu) // bytes for the dataseg portion
-        + 2; // bytes for the magic number
+        + ROUND_TO_NEXT_EVEN(GlobalAllocSize) // bytes for the dataseg portion
+        + BUNDLE_SIZE_MAGIC; // bytes for the magic number
 
     /* where does the currently active bundle start? */
     baseaddr = __mementos_find_active_bundle();
@@ -390,11 +391,11 @@ unsigned int __mementos_locate_next_bundle (unsigned int sp /* hack */) {
 
     /* grab the size of the currently active bundle */
     bsize =
-        2 // bytes for the bundle header
-        + 30 // bytes for the register portion
+        BUNDLE_SIZE_HEADER // bytes for the bundle header
+        + BUNDLE_SIZE_REGISTERS // bytes for the register portion
         + (MEMREF(baseaddr) >> 8) // for the stack portion
-        + (MEMREF(baseaddr) & 0x00ffu) // for the dataseg portion
-        + 2; // bytes for the magic number
+        + (MEMREF(baseaddr) & 0xFF) // for the dataseg portion
+        + BUNDLE_SIZE_MAGIC; // bytes for the magic number
 
     next = baseaddr + bsize; // next byte after currently active bundle
 
@@ -404,11 +405,11 @@ unsigned int __mementos_locate_next_bundle (unsigned int sp /* hack */) {
      * again. */
     while (MEMREF(next) != 0xFFFFu) {
         bsize =
-            2 // bytes for the bundle header
-            + 30 // bytes for the register portion
+            BUNDLE_SIZE_HEADER // bytes for the bundle header
+            + BUNDLE_SIZE_REGISTERS // bytes for the register portion
             + (MEMREF(next) >> 8) // for the stack portion
             + (MEMREF(next) & 0x00FFu) // for the dataseg portion
-            + 2; // bytes for the magic number
+            + BUNDLE_SIZE_MAGIC; // bytes for the magic number
         next += bsize;
 
         if (next > (SECOND_BUNDLE_SEG + MAINMEM_SEGSIZE)) { // out of bounds
@@ -458,25 +459,38 @@ unsigned int __mementos_locate_next_bundle (unsigned int sp /* hack */) {
  * 0xFFFFu if no active bundle is found. */
 unsigned int __mementos_find_active_bundle (void) {
     unsigned int bun = FIRST_BUNDLE_SEG;
+    unsigned int pri_segment, alt_segment;
     unsigned int magic, endloc;
     unsigned int candidate = 0xFFFFu; // current candidate for active bundle
     __mementos_log_event(MEMENTOS_STATUS_FINDING_BUNDLE);
     if (__mementos_segment_is_empty(FIRST_BUNDLE_SEG) ||
             __mementos_segment_marked_erase(FIRST_BUNDLE_SEG)) {
-        // FIRST_BUNDLE_SEG does not contain an active bundle, so look in 2nd
-        bun = SECOND_BUNDLE_SEG;
+        pri_segment = SECOND_BUNDLE_SEG;
+        alt_segment = FIRST_BUNDLE_SEG;
+
+searchbundle:
+        // alt_segment does not contain an active bundle, so look in pri_segment
+        bun = pri_segment;
         do {
             /* on this loop's first iteration, candidate == 0xFFFFu; if there's
-             * no bundle at SECOND_BUNDLE_SEG, there's no active bundle, so
+             * no bundle at pri_segment, there's no active bundle, so
              * return candidate */
             if (MEMREF(bun) == 0xFFFFu) {
                 /* found a blank where a bundle header should be, so we've hit
-                 * the end of bundles in this segment; return the current
-                 * position */
-                __mementos_log_event(MEMENTOS_STATUS_DONE_FINDING_BUNDLE);
-                return candidate;
+                 * the end of bundles in this segment; done looking. */
+                break;
             }
-            endloc = bun + (MEMREF(bun) & 0xff) + (MEMREF(bun) >> 8) + 2 + 30;
+
+            /* compute the location of the canary.  if the word at this location
+             * is equal to MEMENTOS_MAGIC_NUMBER, then this is a valid
+             * checkpoint bundle. */
+            endloc =
+                bun                     // start of bundle
+                + BUNDLE_SIZE_HEADER
+                + BUNDLE_SIZE_REGISTERS
+                + (MEMREF(bun) >> 8)    // size of stack in bytes
+                + (MEMREF(bun) & 0xFF); // size of data segment in bytes
+
             magic = MEMREF(endloc);
             if (magic == MEMENTOS_MAGIC_NUMBER) {
                 /* found a valid bundle */
@@ -490,48 +504,31 @@ unsigned int __mementos_find_active_bundle (void) {
                 /* if the segment starts off with a botched checkpoint, the
                  * whole thing's shot and we should erase it when we get a
                  * chance */
-                if (bun == SECOND_BUNDLE_SEG)
-                    __mementos_mark_segment_erase(SECOND_BUNDLE_SEG);
+                // if (bun == pri_segment)
+                    __mementos_mark_segment_erase(pri_segment);
                 /* else consider the previous bundle the active one (candidate
                  * points at the most recently validated bundle) */
 
                 break;
             }
             bun = endloc + 2 /* skip over 2-byte magic number */;
-        } while (bun < (SECOND_BUNDLE_SEG + MAINMEM_SEGSIZE));
+        } while (bun < (pri_segment + MAINMEM_SEGSIZE));
 
-        if (candidate != 0xFFFFu &&
-            !__mementos_segment_is_empty(FIRST_BUNDLE_SEG))
-            __mementos_mark_segment_erase(FIRST_BUNDLE_SEG);
+        if (candidate != 0xFFFFu) {
+            // don't need the other segment's data anymore
+            if (!__mementos_segment_is_empty(FIRST_BUNDLE_SEG)) {
+                __mementos_mark_segment_erase(FIRST_BUNDLE_SEG);
+            }
+        }
 
         __mementos_log_event(MEMENTOS_STATUS_DONE_FINDING_BUNDLE);
         return candidate;
     }
 
     // if we reach this point, the first bundle may contain an active bundle
-    do {
-        if (MEMREF(bun) == 0xFFFFu) {
-            __mementos_log_event(MEMENTOS_STATUS_DONE_FINDING_BUNDLE);
-            return candidate;
-        }
-        endloc = bun + (MEMREF(bun) & 0xff) + (MEMREF(bun) >> 8) + 2 + 30;
-        magic = MEMREF(endloc);
-        if (magic == MEMENTOS_MAGIC_NUMBER) {
-            candidate = bun;
-        } else {
-            if (bun == FIRST_BUNDLE_SEG) // true on first iteration
-                __mementos_mark_segment_erase(FIRST_BUNDLE_SEG);
-            break;
-        }
-        bun = endloc + 2 /* skip over 2-byte magic number */;
-    } while (bun < FIRST_BUNDLE_SEG + MAINMEM_SEGSIZE);
-
-        if (candidate != 0xFFFFu &&
-            !__mementos_segment_is_empty(SECOND_BUNDLE_SEG))
-            __mementos_mark_segment_erase(SECOND_BUNDLE_SEG);
-
-    __mementos_log_event(MEMENTOS_STATUS_DONE_FINDING_BUNDLE);
-    return candidate;
+    pri_segment = FIRST_BUNDLE_SEG;
+    alt_segment = SECOND_BUNDLE_SEG;
+    goto searchbundle;
 }
 
 /* erases the segment containing the address addr_in_segment */
@@ -570,11 +567,10 @@ int main (void) {
 
     /* super-quick check at boot time; may result in the erasure of at most one
      * flash segment */
-    if (__mementos_segment_marked_erase(FIRST_BUNDLE_SEG)) {
+    if (__mementos_segment_marked_erase(FIRST_BUNDLE_SEG))
         __mementos_erase_segment(FIRST_BUNDLE_SEG);
-    } else if (__mementos_segment_marked_erase(SECOND_BUNDLE_SEG)) {
+    if (__mementos_segment_marked_erase(SECOND_BUNDLE_SEG))
         __mementos_erase_segment(SECOND_BUNDLE_SEG);
-    }
 
     i = __mementos_find_active_bundle();
     if ((i >= FIRST_BUNDLE_SEG) && (i < SECOND_BUNDLE_SEG + MAINMEM_SEGSIZE)) {
