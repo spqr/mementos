@@ -8,7 +8,7 @@
 
 #define NUMSAMPLES 64
 
-unsigned int progressbar;
+unsigned int progressbar = 0;
 
 #ifdef __MSP430__
 unsigned samples[NUMSAMPLES];
@@ -22,7 +22,7 @@ const unsigned samples[NUMSAMPLES] = {
 };
 #endif // __MSP430__
 
-unsigned sampmin, sampmax, sampmean, sampstddev;
+unsigned sampmin = 0, sampmax = 0, sampmean = 0, sampstddev = 0;
 
 /* adapted from http://supp.iar.com/FilesPublic/SUPPORT/000419/AN-G-002.pdf */
 unsigned fast_sqrt (unsigned radicand) {
@@ -45,7 +45,6 @@ void setup (void) {
 
 void sense (void) {
     unsigned i;
-    progressbar = 0;
 
   for (i = 0; i < NUMSAMPLES; ++i) {
     P3OUT |= 0x01; // pin 3.0 up
