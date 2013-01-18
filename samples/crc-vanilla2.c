@@ -1,7 +1,7 @@
 #include "common.h"
 #include <msp430.h>
 
-unsigned int iters;
+unsigned int iters = 0;
 
 /**
  * CRC-16 from WISP firmware 4.1.  Comment from their code follows:
