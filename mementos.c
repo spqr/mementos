@@ -517,7 +517,8 @@ searchbundle:
                 candidate = bun;
 
                 if ((MEMREF(bun + VTHRESH_OFFSET) == prev_V_thresh)
-                        && (MEMREF(bun + GENERATION_OFFSET) == prev_generation))
+                        && (MEMREF(bun + GENERATION_OFFSET) == prev_generation)
+                        && !should_increase_V_thresh)
                 {
                     /* two or more bundles with same V_thresh in the same prior
                      * generation means we can decrease V_thresh for this
@@ -544,8 +545,12 @@ searchbundle:
                  * points at the most recently validated bundle) */
 
                 // increase V_thresh to start checkpointing earlier next time
-                should_increase_V_thresh = 1;
-                should_decrease_V_thresh = 0;
+                if (!should_decrease_V_thresh)
+                    should_increase_V_thresh = 1;
+                /*
+                if (generation == 0xFFFF)
+                    should_increase_V_thresh = 1;
+                */
 
                 break;
             }
