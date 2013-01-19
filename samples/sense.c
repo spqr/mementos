@@ -8,7 +8,7 @@
 
 #define NUMSAMPLES 64
 
-unsigned int progressbar;
+unsigned int progressbar = 0;
 
 #ifdef __MSP430__
 unsigned samples[NUMSAMPLES];
@@ -45,7 +45,6 @@ void setup (void) {
 
 void sense (void) {
     unsigned i;
-    progressbar = 0;
 
   for (i = 0; i < NUMSAMPLES; ++i) {
     P3OUT |= 0x01; // pin 3.0 up
