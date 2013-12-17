@@ -33,13 +33,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define MEMENTOS_PASSES_H
 
 #include "llvm/Pass.h"
-#include "llvm/Module.h"
-#include "llvm/DerivedTypes.h"
-#include "llvm/Instructions.h"
+#include "llvm/IR/Module.h"
+#include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/Instructions.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Target/TargetData.h"
+#include "llvm/IR/DataLayout.h"
 #include "llvm/Support/raw_ostream.h"
 #include <map>
 #include <string>
@@ -48,7 +48,7 @@ namespace llvm {
 
   struct MementosSizeGlobals : public ModulePass {
     static char ID;
-    TargetData *TD;
+    DataLayout *TD;
     unsigned TotalSizeInBytes;
 
     MementosSizeGlobals ();

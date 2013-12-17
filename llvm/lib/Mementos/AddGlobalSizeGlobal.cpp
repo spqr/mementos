@@ -31,7 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "mementos/Mementos.h"
 #include "mementos/Passes.h"
-#include "llvm/Constants.h"
+#include "llvm/IR/Constants.h"
 using namespace llvm;
 
 char MementosAddGlobalSizeGlobal::ID = 0;

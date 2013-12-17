@@ -31,7 +31,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "mementos/Mementos.h"
 #include "mementos/Passes.h"
-#include "llvm/Instructions.h"
+#include "llvm/IR/Instructions.h"
 #include <string>
 using namespace llvm;
 

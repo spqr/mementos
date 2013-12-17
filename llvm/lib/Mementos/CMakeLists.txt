@@ -1,0 +1,10 @@
+add_llvm_loadable_module(Mementos
+  AddGlobalSizeGlobal.cpp
+  AppendCleanup.cpp
+  InstrumentAllFunctionReturns.cpp
+  InstrumentAllLoopLatches.cpp
+  RenameMain.cpp
+  SizeGlobals.cpp
+  TriggerPointInstrumenter.cpp
+  Warnings.cpp
+  )
