@@ -52,9 +52,9 @@ bool MementosInstrumentAllLoopLatches::doInitialization (Loop *loop,
   containingFunction = loop->getHeader()->getParent();
   setModule(containingFunction->getParent());
 
-  Attributes alp = containingFunction->getAttributes().getFnAttributes();
+  AttributeSet alp = containingFunction->getAttributes().getFnAttributes();
   DEBUG(outs() << "Containing function " << containingFunction->getName()
-      << " attributes: " << Attribute::getAsString(alp) << "\n");
+      << " attributes: " << alp.getAsString(0) << "\n");
 
   return (triggerPointFunction != NULL);
 }

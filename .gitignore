@@ -4,8 +4,9 @@ aclocal.m4
 /autoconf/configure
 config.status
 config.log
-/llvm/Makefile.common
-/llvm/Debug+Asserts/
-/llvm/Release+Asserts/
-/llvm/lib/Mementos/Debug+Asserts/
-/llvm/lib/Mementos/Release+Asserts/
+/llvm/Makefile
+/llvm/install_manifest.txt
+/llvm/**/CMakeCache.txt
+/llvm/**/CMakeFiles
+/llvm/**/cmake_install.cmake
+/llvm/lib/Mementos/Makefile
