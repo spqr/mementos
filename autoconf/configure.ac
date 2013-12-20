@@ -50,6 +50,7 @@ AC_CONFIG_SRCDIR(["Makefile.common.in"])
 dnl Configure a common Makefile
 AC_CONFIG_FILES(Makefile.common)
 
+AC_SUBST(prefix)
 AC_SUBST(LLVMPREFIX)
 AC_SUBST(LLVM_BIN)
 AC_SUBST(LLVM_LIB)

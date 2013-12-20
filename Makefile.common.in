@@ -28,7 +28,7 @@ ifeq ($(OS),Darwin)
 else
  LIBNAME=Mementos.so
 endif
-MEMENTOSLIB=$(LLVM_LIB)/$(LIBNAME)
+MEMENTOSLIB=@prefix@/lib/$(LIBNAME)
 
 # optimization passes common to all flavors
 OPT_GSIZE=$(OPT) -load $(MEMENTOSLIB) -mementos-add-global-size-global -mementos-rename-main
