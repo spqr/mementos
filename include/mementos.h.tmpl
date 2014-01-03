@@ -35,32 +35,59 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef __MSPGCC__
 #include <msp430.h>
 #elif (defined(__clang__))
-#include <msp430f2618.h>
+# if defined(__MSP430F2131__)
+#  include <msp430f2131.h>
+# elif defined(__MSP430F2132__)
+#  include <msp430f2132.h>
+# elif defined(__MSP430F1611__)
+#  include <msp430f1611.h>
+# elif defined(__MSP430F2618__)
+#  include <msp430f2618.h>
+# elif defined(__MSP430FR5969__)
+#  include <msp430fr5969.h>
+# else
+# error Missing or unsupported chip.
+# endif
 #else
 #error Unsupported compiler; use either mspgcc or Clang.
 #endif
 
-#if (!defined(__MSP430F2131__) && \
-        !defined(__MSP430F2132__) && \
-        !defined(__MSP430F1611__) && \
-        !defined(__MSP430F2618__))
-#error Unsupported hardware; see mementos.h.
-#endif
+#define MAINMEM_SEGSIZE 512
+
+# if defined(__MSP430F2131__)
+#  define FIRST_BUNDLE_SEG 0xFA00u
+#  define SECOND_BUNDLE_SEG 0xFC00u
+#  define TOPOFSTACK 0x0300
+#  define STARTOFDATA 0x0200
+# elif defined(__MSP430F2132__)
+#  define FIRST_BUNDLE_SEG 0xFA00u
+#  define SECOND_BUNDLE_SEG 0xFC00u
+#  define TOPOFSTACK 0x0400
+#  define STARTOFDATA 0x0200
+# elif defined(__MSP430F1611__)
+#  define FIRST_BUNDLE_SEG 0xFA00u
+#  define SECOND_BUNDLE_SEG 0xFC00u
+#  define TOPOFSTACK 0x3900
+#  define STARTOFDATA 0x1100
+# elif defined(__MSP430F2618__)
+#  define FIRST_BUNDLE_SEG 0xFB00
+#  define SECOND_BUNDLE_SEG 0xFD00
+#  define TOPOFSTACK 0x3100
+#  define STARTOFDATA 0x1100
+# elif defined(__MSP430FR5969__)
+#  undef FIRST_BUNDLE_SEG /* FRAM has no segments */
+#  undef SECOND_BUNDLE_SEG
+#  undef MAINMEM_SEGSIZE
+#  define TOPOFSTACK 0x23FF
+#  define STARTOFDATA 0x1C00
+# else
+#  error Unsupported hardware; see include/mementos.h.
+# endif
 
 #ifdef MEMENTOS_HARDWARE
 # include "pinDefWISP4.1DL.h"
 #endif // MEMENTOS_HARDWARE
 
-/* where do the segments to which we can write checkpoint bundles start? */
-#ifdef __MSP430F2618__
-#define FIRST_BUNDLE_SEG 0xF900
-#define SECOND_BUNDLE_SEG 0xFB00
-#else
-#define FIRST_BUNDLE_SEG 0xFA00u
-#define SECOND_BUNDLE_SEG 0xFC00u
-#endif // __MSP430F2618__
-#define INFOMEM_SEGSIZE 64
-#define MAINMEM_SEGSIZE 512
 
 #ifndef V_THRESH
 /* in Haskell: map (\x -> (x, round $ 65536 * (x/3.0)/2.5)) [1.8,1.9..5.0] */
@@ -140,21 +167,6 @@ extern volatile unsigned int VOLTAGE_CHECK asm("0x01C0");
 #endif // MEMENTOS_HARDWARE
 
 #define MEMENTOS_MAGIC_NUMBER 0xBEADu
-
-/* horrible cheating hackery */
-#ifdef __MSP430F2131__
-#define TOPOFSTACK 0x0300
-#define STARTOFDATA 0x0200
-#elif defined(__MSP430F2132__)
-#define TOPOFSTACK 0x0400
-#define STARTOFDATA 0x0200
-#elif defined(__MSP430F1611__)
-#define TOPOFSTACK 0x3900
-#define STARTOFDATA 0x1100
-#elif defined(__MSP430F2618__)
-#define TOPOFSTACK 0x3100
-#define STARTOFDATA 0x1100
-#endif
 
 #ifdef MEMENTOS_TIMER
 void Timer_A (void) __attribute__((interrupt(12))); // 0xFFEC for F1611 XXX
