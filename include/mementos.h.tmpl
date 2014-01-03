@@ -53,6 +53,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 #define MAINMEM_SEGSIZE 512
+#define MEMENTOS_FLASH
+#undef  MEMENTOS_FRAM
 
 # if defined(__MSP430F2131__)
 #  define FIRST_BUNDLE_SEG 0xFA00u
@@ -75,6 +77,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #  define TOPOFSTACK 0x3100
 #  define STARTOFDATA 0x1100
 # elif defined(__MSP430FR5969__)
+#  define MEMENTOS_FRAM
+#  undef MEMENTOS_FLASH
 #  undef FIRST_BUNDLE_SEG /* FRAM has no segments */
 #  undef SECOND_BUNDLE_SEG
 #  undef MAINMEM_SEGSIZE
@@ -133,10 +137,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /* function prototypes */
 void __mementos_checkpoint (void);
 void __mementos_restore (unsigned int);
+#ifndef MEMENTOS_FRAM
 void __mementos_erase_segment (unsigned int);
 void __mementos_mark_segment_erase (unsigned int);
 unsigned int __mementos_segment_is_empty (unsigned int);
 unsigned int __mementos_segment_marked_erase (unsigned int);
+#endif
 unsigned int __mementos_locate_next_bundle (unsigned int);
 unsigned int __mementos_find_active_bundle (void);
 

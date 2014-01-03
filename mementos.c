@@ -123,10 +123,12 @@ void __mementos_checkpoint (void) {
         }
     }
 
+#ifdef MEMENTOS_FLASH
     // make flash writable
     asm volatile ("DINT");
     FCTL3 = FWKEY;
     FCTL1 = FWKEY + WRT;
+#endif // MEMENTOS_FLASH
 
     /********** phase #0: save size header (2 bytes) **********/
     asm volatile ("PUSH R12");
@@ -198,9 +200,11 @@ void __mementos_checkpoint (void) {
             __mementos_mark_segment_erase(j);
     }
 
+#ifdef MEMENTOS_FLASH
     FCTL1 = FWKEY;
     FCTL3 = FWKEY + LOCK;
     asm volatile ("EINT");
+#endif // MEMENTOS_FLASH
 
 #ifdef MEMENTOS_TIMER
     // CCR0 = TIMER_INTERVAL; // XXX choose a good interval -- what are the units?
@@ -349,11 +353,14 @@ unsigned int __mementos_segment_is_empty (unsigned int addr) {
     return 1;
 }
 
+#ifdef MEMENTOS_FLASH
 unsigned int __mementos_segment_marked_erase (unsigned int addr) {
     return ((MEMREF(addr+2) == 0x0000u)
             && (MEMREF(addr+MAINMEM_SEGSIZE-2) == 0x0000u));
 }
+#endif // MEMENTOS_FLASH
 
+#ifdef MEMENTOS_FLASH
 void __mementos_mark_segment_erase (unsigned int addr) {
     FCTL3 = FWKEY;
     FCTL1 = FWKEY + WRT;
@@ -362,6 +369,7 @@ void __mementos_mark_segment_erase (unsigned int addr) {
     FCTL1 = FWKEY;
     FCTL3 = FWKEY + LOCK;
 }
+#endif // MEMENTOS_FLASH
 
 /* rules:
  *  - don't put a bundle at the beginning of a non-erased segment
@@ -531,6 +539,7 @@ searchbundle:
     goto searchbundle;
 }
 
+#ifdef MEMENTOS_FLASH
 /* erases the segment containing the address addr_in_segment */
 void __mementos_erase_segment (unsigned int addr_in_segment) {
     asm volatile ("DINT");
@@ -541,6 +550,7 @@ void __mementos_erase_segment (unsigned int addr_in_segment) {
     FCTL3 = FWKEY + LOCK;
     asm volatile ("EINT"); // XXX should probably *conditionally* reenable here
 }
+#endif // MEMENTOS_FLASH
 
 
 __attribute__((section(".init9"), aligned(2)))
