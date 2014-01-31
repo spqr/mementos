@@ -18,8 +18,8 @@ MCU ?= msp430f2618
 MCUDEF = $(shell echo "$(MCU)" | sed -e 's/^/__/; s/$$/__/; s/x/_/' | tr a-z A-Z)
 
 # compiler flags
-override CFLAGS+=-I$(PWD)/include $(MSPGCCHEADERS) -D$(MCUDEF) -O0 -emit-llvm -target msp430-elf
-override MCFLAGS+=-I$(PWD)/include -mmcu=$(MCU)
+override CFLAGS+=-Wall -I$(PWD)/include $(MSPGCCHEADERS) -D$(MCUDEF) -O0 -emit-llvm -target msp430-elf
+override MCFLAGS+=-Wall -I$(PWD)/include -mmcu=$(MCU)
 
 # OS-specific options
 OS=$(shell uname -s)

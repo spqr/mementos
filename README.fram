@@ -1,0 +1,1 @@
+$ make MCU=msp430fr5969 FRAM=1

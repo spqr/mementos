@@ -20,17 +20,31 @@ MCLIBS += $(MYLIBS)
 
 .DUMMY: all clean distclean gdbcommands install strip
 
+MEMENTOS_SRCS =
+
 ifdef TIMER
 override CFLAGS += -DMEMENTOS_TIMER
 endif
 
 ifdef HARDWARE
 override CFLAGS += -DMEMENTOS_HARDWARE
+MEMENTOS_SRCS += mementos_hw.c
 endif
 
 ifdef LOGGING
 override CFLAGS += -DMEMENTOS_LOGGING
+MEMENTOS_SRCS += mementos_logging.c
 endif
+
+ifdef FRAM
+override CFLAGS += -DMEMENTOS_FRAM
+MEMENTOS_SRCS += mementos_fram.c
+else
+override CFLAGS += -DMEMENTOS_FLASH
+MEMENTOS_SRCS += mementos_flash.c
+endif
+
+MEMENTOS_OBJS = $(MEMENTOS_SRCS:.c=.bc)
 
 VTHRESHDEFAULT=2.7
 ifeq ($(VTHRESH),)
@@ -49,7 +63,7 @@ TARGETS=$(MYLIBS) $(foreach flavor,$(FLAVORS),$(TARGET)+$(flavor))
 all: $(TARGETS)
 
 mementos.c: include/mementos.h
-include/mementos.h:
+include/mementos.h: include/mementos.h.tmpl
 	scripts/setthresh.pl $(VTHRESH) $(TIMERINT) include/mementos.h.tmpl >include/mementos.h
 
 .c.bc: include/mementos.h
@@ -76,16 +90,19 @@ $(TARGET)+plainclang: $(TARGET).c include/mementos.h $(MYLIBS)
 $(TARGET)+plainmspgcc: $(TARGET).c include/mementos.h
 	$(MSPGCC) $(MCFLAGS) -o $@ $< $(MCLIBS)
 
-
 # standalone Mementos bitcode (for linking against)
-mementos+latch.bc: mementos.c
-	$(CLANG) $(CFLAGS) -o $@ -DMEMENTOS_LATCH -c $<
-mementos+return.bc: mementos.c
-	$(CLANG) $(CFLAGS) -o $@ -DMEMENTOS_RETURN -c $<
-mementos+timer+latch.bc: mementos.c
-	$(CLANG) $(CFLAGS) -o $@ -DMEMENTOS_TIMER -DMEMENTOS_LATCH -c $<
-mementos+oracle.bc: mementos.c
-	$(CLANG) $(CFLAGS) -o $@ -DMEMENTOS_ORACLE -c $<
+mementos+latch.bc: mementos.c $(MEMENTOS_OBJS)
+	$(CLANG) $(CFLAGS) -o mementos.bc -DMEMENTOS_LATCH -c $<
+	$(LLVM_LINK) -o $@ mementos.bc $(MEMENTOS_OBJS)
+mementos+return.bc: mementos.c $(MEMENTOS_OBJS)
+	$(CLANG) $(CFLAGS) -o mementos.bc -DMEMENTOS_RETURN -c $<
+	$(LLVM_LINK) -o $@ mementos.bc $(MEMENTOS_OBJS)
+mementos+timer+latch.bc: mementos.c $(MEMENTOS_OBJS)
+	$(CLANG) $(CFLAGS) -o mementos.bc -DMEMENTOS_TIMER -DMEMENTOS_LATCH -c $<
+	$(LLVM_LINK) -o $@ mementos.bc $(MEMENTOS_OBJS)
+mementos+oracle.bc: mementos.c $(MEMENTOS_OBJS)
+	$(CLANG) $(CFLAGS) -o mementos.bc -DMEMENTOS_ORACLE -c $<
+	$(LLVM_LINK) -o $@ mementos.bc $(MEMENTOS_OBJS)
 
 # instrument all loop latches
 $(TARGET)+latch: $(TARGET).c include/mementos.h mementos+latch.bc $(MYLIBS)

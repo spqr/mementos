@@ -46,7 +46,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # elif defined(__MSP430FR5969__)
 #  include <msp430fr5969.h>
 # else
-# error Missing or unsupported chip.
+#  error Missing or unsupported chip.
 # endif
 #else
 #error Unsupported compiler; use either mspgcc or Clang.
@@ -84,6 +84,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #  undef MAINMEM_SEGSIZE
 #  define TOPOFSTACK 0x23FF
 #  define STARTOFDATA 0x1C00
+#  define FRAM_END 0x13FFF
+#  define FRAM_MEMENTOS_BEGIN (FRAM_END+1 - (2*(TOPOFSTACK+1 - STARTOFDATA)))
 # else
 #  error Unsupported hardware; see include/mementos.h.
 # endif
@@ -137,14 +139,19 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /* function prototypes */
 void __mementos_checkpoint (void);
 void __mementos_restore (unsigned int);
-#ifndef MEMENTOS_FRAM
+unsigned int __mementos_locate_next_bundle (unsigned int);
+unsigned int __mementos_find_active_bundle (void);
+
+void __mementos_atboot_cleanup (void);
+unsigned int __mementos_bundle_in_range (unsigned int);
+void __mementos_inactive_cleanup (unsigned int);
+
+#ifdef MEMENTOS_FLASH
 void __mementos_erase_segment (unsigned int);
 void __mementos_mark_segment_erase (unsigned int);
 unsigned int __mementos_segment_is_empty (unsigned int);
 unsigned int __mementos_segment_marked_erase (unsigned int);
 #endif
-unsigned int __mementos_locate_next_bundle (unsigned int);
-unsigned int __mementos_find_active_bundle (void);
 
 #ifdef MEMENTOS_LOGGING
 # define MEMENTOS_STATUS_STARTING_CHECKPOINT 0x1
