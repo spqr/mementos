@@ -5,6 +5,7 @@
 
 extern unsigned int i, j, k;
 extern unsigned long baseaddr;
+unsigned long xxx = 0;
 
 unsigned int GlobalAllocSize = 0;
 
@@ -45,23 +46,23 @@ void __mementos_checkpoint (void) {
     __mementos_log_event(MEMENTOS_STATUS_STARTING_CHECKPOINT);
 
     // push all the registers onto the stack
-    asm volatile ("PUSH 2(R1)\n\t" // PC will appear at 28(R1)
-                  "PUSH R1\n\t"    // SP will appear at 26(R1)
-                  "ADD #6, 0(R1)\n\t" // to account for 2xPC + R1 itself
-                  "PUSH R2\n\t"    // R2  will appear at 24(R1)
-                //"PUSH R3\n\t" // skip R3
-                  "PUSH R4\n\t"    // R4  will appear at 22(R1)
-                  "PUSH R5\n\t"    // R5  will appear at 20(R1)
-                  "PUSH R6\n\t"    // R6  will appear at 18(R1)
-                  "PUSH R7\n\t"    // R7  will appear at 16(R1)
-                  "PUSH R8\n\t"    // R8  will appear at 14(R1)
-                  "PUSH R9\n\t"    // R9  will appear at 12(R1)
-                  "PUSH R10\n\t"   // R10 will appear at 10(R1)
-                  "PUSH R11\n\t"   // R11 will appear at 8(R1)
-                  "PUSH R12\n\t"   // R12 will appear at 6(R1)
-                  "PUSH R13\n\t"   // R13 will appear at 4(R1)
-                  "PUSH R14\n\t"   // R14 will appear at 2(R1)
-                  "PUSH R15");     // R15 will appear at 0(R1)
+    asm volatile ("PUSH 2(R1)"); // PC will appear at 28(R1)
+    asm volatile ("PUSH R1");    // SP will appear at 26(R1)
+    asm volatile ("ADD #6, 0(R1)"); // to account for 2xPC + R1 itself
+    asm volatile ("PUSH R2");    // R2  will appear at 24(R1)
+    //asm volatile ("PUSH R3"); // skip R3 (constant generator)
+    asm volatile ("PUSH R4");    // R4  will appear at 22(R1)
+    asm volatile ("PUSH R5");    // R5  will appear at 20(R1)
+    asm volatile ("PUSH R6");    // R6  will appear at 18(R1)
+    asm volatile ("PUSH R7");    // R7  will appear at 16(R1)
+    asm volatile ("PUSH R8");    // R8  will appear at 14(R1)
+    asm volatile ("PUSH R9");    // R9  will appear at 12(R1)
+    asm volatile ("PUSH R10");   // R10 will appear at 10(R1)
+    asm volatile ("PUSH R11");   // R11 will appear at 8(R1)
+    asm volatile ("PUSH R12");   // R12 will appear at 6(R1)
+    asm volatile ("PUSH R13");   // R13 will appear at 4(R1)
+    asm volatile ("PUSH R14");   // R14 will appear at 2(R1)
+    asm volatile ("PUSH R15");     // R15 will appear at 0(R1)
 
     /**** figure out where to put this checkpoint bundle ****/
     /* precompute the size of the stack portion of the bundle */
@@ -111,6 +112,7 @@ void __mementos_checkpoint (void) {
                   "POP 6(R14)\n\t"  // R2
                   "POP 4(R14)\n\t"  // R1
                   "POP 2(R14)");    // R0
+    asm volatile ("MOV R14, %0" :"=m"(xxx):);
 
     /********** phase #2: checkpoint memory. **********/
 
