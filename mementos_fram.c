@@ -62,7 +62,7 @@ void __mementos_checkpoint (void) {
 
     /**** figure out where to put this checkpoint bundle ****/
     /* precompute the size of the stack portion of the bundle */
-    asm volatile ("MOV 26(R1), &%0" :"=m"(j)); // j = SP
+    asm volatile ("MOV 26(R1), %0" :"=m"(j)); // j = SP
     /* j now contains the pre-call value of the stack pointer */
 
     baseaddr = __mementos_locate_next_bundle(j);
@@ -73,14 +73,14 @@ void __mementos_checkpoint (void) {
 
     // compute size of stack (in bytes) into R13
     asm volatile ("MOV #" xstr(TOPOFSTACK) ", R13");
-    asm volatile ("SUB &%0, R13" ::"m"(j)); // j == old stack pointer
+    asm volatile ("SUB %0, R13" ::"m"(j)); // j == old stack pointer
 
     // write size of stack (R13) to high byte at baseaddr
-    asm volatile ("MOV &%0, R12" ::"m"(baseaddr));
+    asm volatile ("MOV %0, R12" ::"m"(baseaddr));
     asm volatile ("MOV.B R13, 1(R12)");
 
     // store GlobalAllocSize into R13, round it up to the next word boundary
-    asm volatile ("MOV &%0, R13" ::"m"(GlobalAllocSize));
+    asm volatile ("MOV %0, R13" ::"m"(GlobalAllocSize));
     asm volatile ("INC R13");
     asm volatile ("AND #0xFE, R13");
 
@@ -91,7 +91,7 @@ void __mementos_checkpoint (void) {
     asm volatile ("POP R12");
 
     /********** phase #1: checkpoint registers. **********/
-    asm volatile ("MOV &%0, R14" ::"m"(baseaddr));
+    asm volatile ("MOV %0, R14" ::"m"(baseaddr));
     asm volatile ("POP 30(R14)\n\t" // R15
                   "POP 28(R14)\n\t" // R14
                   "POP 26(R14)\n\t" // R13

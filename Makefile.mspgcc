@@ -1,0 +1,19 @@
+CC=msp430-gcc
+CFLAGS=-mmcu=msp430fr5969 -Iinclude
+
+.DUMMY: all
+all: mementos_fram.a
+
+include/mementos.h: include/mementos.h.tmpl
+	scripts/setthresh.pl $(VTHRESH) $(TIMERINT) include/mementos.h.tmpl >include/mementos.h
+
+%.s: %.c
+	$(CC) $(CFLAGS) -S -o $@ $^
+
+%.c: include/mementos.h
+
+mementos_fram.a: mementos.o mementos_fram.o
+	msp430-ar r $@ $^
+
+clean:
+	$(RM) mementos_fram.a *.o

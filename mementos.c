@@ -35,19 +35,19 @@ void __mementos_restore (unsigned int b) {
         */
 
         // j = TOPOFSTACK - i - 2;
-        asm volatile("MOV #" xstr(TOPOFSTACK) ", &%0" :"=m"(j));
-        asm volatile("SUB &%0, &%1" :"=m"(i) :"m"(j));
-        asm volatile("DECD.W &%0" ::"m"(j));
+        asm volatile("MOV #" xstr(TOPOFSTACK) ", %0" :"=m"(j));
+        asm volatile("SUB %0, %1" :"=m"(i) :"m"(j));
+        asm volatile("DECD.W %0" ::"m"(j));
 
         // k = baseaddr; k += 30; k += tmpsize; k -= i;
-        asm volatile("MOV &%1, &%0" :"=m"(k) :"m"(baseaddr));
-        asm volatile("ADD #" xstr(BUNDLE_SIZE_REGISTERS) ", &%0" ::"m"(k));
-        asm volatile("ADD &%1, &%0" :"=m"(k) :"m"(tmpsize));
-        asm volatile("SUB &%1, &%0" :"=m"(k) :"m"(i));
+        asm volatile("MOV %1, %0" :"=m"(k) :"m"(baseaddr));
+        asm volatile("ADD #" xstr(BUNDLE_SIZE_REGISTERS) ", %0" ::"m"(k));
+        asm volatile("ADD %1, %0" :"=m"(k) :"m"(tmpsize));
+        asm volatile("SUB %1, %0" :"=m"(k) :"m"(i));
 
         // MEMREF(j) = MEMREF(k);
-        asm volatile("MOV &%0, R7" ::"m"(k));
-        asm volatile("MOV &%0, R8" ::"m"(j));
+        asm volatile("MOV %0, R7" ::"m"(k));
+        asm volatile("MOV %0, R8" ::"m"(j));
         asm volatile("MOV @R7, 0(R8)");
     }
 
@@ -64,8 +64,8 @@ void __mementos_restore (unsigned int b) {
      *         memory[baseaddr + stacksize + regfilesize + headersize + i]
      * }
      */
-    asm volatile("MOV &%0, R7" ::"m"(tmpsize));  // R7(stacksize) = tmpsize
-    asm volatile("MOV &%0, R6" ::"m"(baseaddr)); // R6(baseaddr)  = baseaddr
+    asm volatile("MOV %0, R7" ::"m"(tmpsize));  // R7(stacksize) = tmpsize
+    asm volatile("MOV %0, R6" ::"m"(baseaddr)); // R6(baseaddr)  = baseaddr
     asm volatile("MOV @R6, R8\n\t"               // R8(globalsize) =
                  "AND #255, R8");                //   MEMREF(baseaddr) & 0x00FF
     asm volatile("CLR.W R9");                    // R9(i) = 0 // induction var
@@ -85,13 +85,13 @@ void __mementos_restore (unsigned int b) {
     asm volatile("afterrd:");                    // jump here when done
 
     /* set baseaddr back to whatever it was */
-    asm volatile("MOV R6, &%0" :"=m"(baseaddr));
+    asm volatile("MOV R6, %0" :"=m"(baseaddr));
 
     /* finally, restore all the registers, starting at R15 and counting down to
      * R0/PC.  setting R0/PC is an implicit jump, so we have to do it last. */
 
     /* j = <PC to restore> (note: R6 still contains baseaddr) */
-    asm volatile ("MOV 2(R6), &%0" :"=m"(j));
+    asm volatile ("MOV 2(R6), %0" :"=m"(j));
 
     /* set the SP first, so we can PUSH stuff; we'll reset it later */
     asm volatile ("MOV 4(R6), R1");
@@ -133,7 +133,7 @@ void __mementos_restore (unsigned int b) {
                   "MOV  2(R1), R1");
 
     j = MEMREF(baseaddr + BUNDLE_SIZE_HEADER);
-    asm volatile ("MOV &%0, R0" ::"m"(j)); // implicit jump ... restored!
+    asm volatile ("MOV %0, R0" ::"m"(j)); // implicit jump ... restored!
 }
 
 #ifdef MEMENTOS_TIMER
