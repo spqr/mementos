@@ -46,27 +46,27 @@ void __mementos_checkpoint (void) {
     __mementos_log_event(MEMENTOS_STATUS_STARTING_CHECKPOINT);
 
     // push all the registers onto the stack
-    asm volatile ("PUSH 2(R1)"); // PC will appear at 28(R1)
-    asm volatile ("PUSH R1");    // SP will appear at 26(R1)
+    asm volatile ("PUSH 2(R1)"); // PC will appear at 56(R1)
+    asm volatile ("PUSH R1");    // SP will appear at 52(R1)
     asm volatile ("ADD #6, 0(R1)"); // to account for 2xPC + R1 itself
-    asm volatile ("PUSH R2");    // R2  will appear at 24(R1)
+    asm volatile ("PUSH R2");    // R2  will appear at 48(R1)
     //asm volatile ("PUSH R3"); // skip R3 (constant generator)
-    asm volatile ("PUSH R4");    // R4  will appear at 22(R1)
-    asm volatile ("PUSH R5");    // R5  will appear at 20(R1)
-    asm volatile ("PUSH R6");    // R6  will appear at 18(R1)
-    asm volatile ("PUSH R7");    // R7  will appear at 16(R1)
-    asm volatile ("PUSH R8");    // R8  will appear at 14(R1)
-    asm volatile ("PUSH R9");    // R9  will appear at 12(R1)
-    asm volatile ("PUSH R10");   // R10 will appear at 10(R1)
-    asm volatile ("PUSH R11");   // R11 will appear at 8(R1)
-    asm volatile ("PUSH R12");   // R12 will appear at 6(R1)
-    asm volatile ("PUSH R13");   // R13 will appear at 4(R1)
-    asm volatile ("PUSH R14");   // R14 will appear at 2(R1)
+    asm volatile ("PUSH R4");    // R4  will appear at 44(R1)
+    asm volatile ("PUSH R5");    // R5  will appear at 40(R1)
+    asm volatile ("PUSH R6");    // R6  will appear at 36(R1)
+    asm volatile ("PUSH R7");    // R7  will appear at 32(R1)
+    asm volatile ("PUSH R8");    // R8  will appear at 28(R1)
+    asm volatile ("PUSH R9");    // R9  will appear at 24(R1)
+    asm volatile ("PUSH R10");   // R10 will appear at 20(R1)
+    asm volatile ("PUSH R11");   // R11 will appear at 16(R1)
+    asm volatile ("PUSH R12");   // R12 will appear at 12(R1)
+    asm volatile ("PUSH R13");   // R13 will appear at 8(R1)
+    asm volatile ("PUSH R14");   // R14 will appear at 4(R1)
     asm volatile ("PUSH R15");     // R15 will appear at 0(R1)
 
     /**** figure out where to put this checkpoint bundle ****/
     /* precompute the size of the stack portion of the bundle */
-    asm volatile ("MOV 26(R1), %0" :"=m"(j)); // j = SP
+    asm volatile ("MOV 52(R1), %0" :"=m"(j)); // j = SP
     /* j now contains the pre-call value of the stack pointer */
 
     baseaddr = __mementos_locate_next_bundle(j);
@@ -120,7 +120,7 @@ void __mementos_checkpoint (void) {
     i = j;
     j = TOPOFSTACK - i;
     while ((TOPOFSTACK - i) > 0) { // walk up from SP to ToS & copy to flash
-        MEMREF_UINT((baseaddr + BUNDLE_SIZE_HEADER + BUNDLE_SIZE_REGISTERS + j-(TOPOFSTACK-i))) = MEMREF_UINT(i);
+        MEMREF_ULONG((baseaddr + BUNDLE_SIZE_HEADER + BUNDLE_SIZE_REGISTERS + j-(TOPOFSTACK-i))) = MEMREF_ULONG(i);
         i += sizeof(unsigned long);
     }
 
