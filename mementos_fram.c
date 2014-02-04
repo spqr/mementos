@@ -121,13 +121,13 @@ void __mementos_checkpoint (void) {
     j = TOPOFSTACK - i;
     while ((TOPOFSTACK - i) > 0) { // walk up from SP to ToS & copy to flash
         MEMREF_UINT((baseaddr + BUNDLE_SIZE_HEADER + BUNDLE_SIZE_REGISTERS + j-(TOPOFSTACK-i))) = MEMREF_UINT(i);
-        i += 2;
+        i += sizeof(unsigned long);
     }
 
     /* checkpoint as much of the data segment as is necessary */
     j += BUNDLE_SIZE_HEADER + BUNDLE_SIZE_REGISTERS;
     for (i = STARTOFDATA; i < STARTOFDATA+ROUND_TO_NEXT_EVEN(GlobalAllocSize);
-            i += 2, j += 2) {
+            i += sizeof(unsigned int), j += sizeof(unsigned int)) {
         MEMREF_UINT(baseaddr + j) = MEMREF_UINT(i);
     }
     // write the magic number
