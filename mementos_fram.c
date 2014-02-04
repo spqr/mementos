@@ -166,7 +166,7 @@ unsigned long __mementos_locate_next_bundle (unsigned long sp /* hack */) {
         target = FRAM_FIRST_BUNDLE_SEG;
         break;
     }
-    __mementos_fram_clear(target);
+    //__mementos_fram_clear(target);
     return target;
 }
 
@@ -187,12 +187,14 @@ unsigned int __mementos_bundle_in_range (unsigned long bun_addr) {
     return ((bun_addr >= FRAM_FIRST_BUNDLE_SEG) && (bun_addr < FRAM_END));
 }
 
+/*
 void __mementos_fram_clear (unsigned long target) {
     unsigned long i;
     for (i = target; i < (target + (FRAM_SECOND_BUNDLE_SEG - FRAM_FIRST_BUNDLE_SEG)); ++i) {
-        i = 0;
+        MEMREF(i) = 0;
     }
 }
+*/
 
 unsigned int __mementos_force_free (void) {
     // XXX should never need this, but should implement anyway
