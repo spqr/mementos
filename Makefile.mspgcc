@@ -1,13 +1,11 @@
 CC=msp430-gcc
 CFLAGS=-mmcu=msp430fr5969 -g -Iinclude
 
-VTHRESH=2.7
-
 .DUMMY: all
 all: libmementos_fram.a
 
 include/mementos.h: include/mementos.h.tmpl
-	scripts/setthresh.pl $(VTHRESH) $(TIMERINT) $^ > $@
+	cp $< $@
 
 %.s: %.c
 	$(CC) $(CFLAGS) -S -o $@ $^

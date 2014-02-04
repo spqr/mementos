@@ -110,10 +110,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // #define V_THRESH 20972 // 2.4 volts
 // #define V_THRESH 21845 // 2.5 volts
 // #define V_THRESH 22719 // 2.6 volts
-// #define V_THRESH 23593 // 2.7 volts
+#define V_THRESH 23593 // 2.7 volts
 // #define V_THRESH 24467 // 2.8 volts
 // #define V_THRESH 25341 // 2.9 volts
-#define V_THRESH 26214 // 3.0 volts
+// #define V_THRESH 26214 // 3.0 volts
 // #define V_THRESH 27088 // 3.1 volts
 // #define V_THRESH 27962 // 3.2 volts
 // #define V_THRESH 28836 // 3.3 volts
@@ -142,7 +142,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /* function prototypes */
 void __mementos_checkpoint (void);
-void __mementos_restore (unsigned int);
+void __mementos_restore (unsigned long);
 #ifdef MEMENTOS_FRAM
 unsigned long __mementos_locate_next_bundle (unsigned long);
 unsigned long __mementos_find_active_bundle (void);
@@ -200,7 +200,8 @@ void Timer_A (void) __attribute__((interrupt(12))); // 0xFFEC for F1611 XXX
 //==TIMER_INTERVAL==
 #endif
 
-#define MEMREF(x) (*((unsigned int*)(x)))
+#define MEMREF_UINT(x) (*((unsigned int*)(x)))
+#define MEMREF_ULONG(x) (*((unsigned long*)(x)))
 
 #define BUNDLE_SIZE_REGISTERS 30 // 15 * 2 bytes == 30 bytes
 #define BUNDLE_SIZE_HEADER 2     // stack size (1 byte)

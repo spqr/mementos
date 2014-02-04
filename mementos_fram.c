@@ -3,7 +3,8 @@
 #include <mementos.h>
 #include <msp430builtins.h>
 
-extern unsigned int i, j, k, baseaddr;
+extern unsigned int i, j, k;
+extern unsigned long baseaddr;
 
 unsigned int GlobalAllocSize = 0;
 
@@ -117,7 +118,7 @@ void __mementos_checkpoint (void) {
     i = j;
     j = TOPOFSTACK - i;
     while ((TOPOFSTACK - i) > 0) { // walk up from SP to ToS & copy to flash
-        MEMREF((baseaddr + BUNDLE_SIZE_HEADER + BUNDLE_SIZE_REGISTERS + j-(TOPOFSTACK-i))) = MEMREF(i);
+        MEMREF_UINT((baseaddr + BUNDLE_SIZE_HEADER + BUNDLE_SIZE_REGISTERS + j-(TOPOFSTACK-i))) = MEMREF_UINT(i);
         i += 2;
     }
 
@@ -125,11 +126,11 @@ void __mementos_checkpoint (void) {
     j += BUNDLE_SIZE_HEADER + BUNDLE_SIZE_REGISTERS;
     for (i = STARTOFDATA; i < STARTOFDATA+ROUND_TO_NEXT_EVEN(GlobalAllocSize);
             i += 2, j += 2) {
-        MEMREF(baseaddr + j) = MEMREF(i);
+        MEMREF_UINT(baseaddr + j) = MEMREF_UINT(i);
     }
     // write the magic number
-    MEMREF(baseaddr + j) = MEMENTOS_MAGIC_NUMBER;
-    MEMREF(ACTIVE_BUNDLE_PTR) = baseaddr;
+    MEMREF_ULONG(baseaddr + j) = MEMENTOS_MAGIC_NUMBER;
+    MEMREF_ULONG(ACTIVE_BUNDLE_PTR) = baseaddr;
     __mementos_log_event(MEMENTOS_STATUS_COMPLETED_CHECKPOINT);
 
 #ifdef MEMENTOS_TIMER
@@ -171,7 +172,7 @@ unsigned long __mementos_locate_next_bundle (unsigned long sp /* hack */) {
 }
 
 unsigned long __mementos_find_active_bundle (void) {
-    unsigned long active_ptr = MEMREF(ACTIVE_BUNDLE_PTR);
+    unsigned long active_ptr = MEMREF_ULONG(ACTIVE_BUNDLE_PTR);
     if (__mementos_bundle_in_range(active_ptr))
         return active_ptr;
     return 0xffff;

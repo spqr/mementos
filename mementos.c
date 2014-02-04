@@ -4,15 +4,15 @@
 #include <msp430builtins.h> // XXX hack
 
 // extern int _old_main (void);
-unsigned int baseaddr;
-unsigned int i, j, k;
-unsigned int tmpsize;
+unsigned long baseaddr;
+unsigned long i, j, k;
+unsigned long tmpsize;
 // unsigned int interrupts_enabled;
 #ifdef MEMENTOS_TIMER
 bool ok_to_checkpoint;
 #endif // MEMENTOS_TIMER
 
-void __mementos_restore (unsigned int b) {
+void __mementos_restore (unsigned long b) {
     /* b is a pointer to a valid bundle found by __mementos_find_active_bundle.
      * the first word of the bundle is split: the high byte designates the size
      * (in bytes) of the stack portion of the bundle and the low byte designates
@@ -28,7 +28,7 @@ void __mementos_restore (unsigned int b) {
 
     /* restore the stack by walking from the top to the bottom of the stack
      * portion of the checkpoint */
-    tmpsize = MEMREF(baseaddr) >> 8; // stack size
+    tmpsize = MEMREF_ULONG(baseaddr) >> 8; // stack size
     for (i = 0; i < tmpsize; i += 2) {
         /* summary:
         MEMREF(TOPOFSTACK - i) = MEMREF(baseaddr + 30 + tmpsize - i);
@@ -132,7 +132,7 @@ void __mementos_restore (unsigned int b) {
                    * here to when we restore the PC */
                   "MOV  2(R1), R1");
 
-    j = MEMREF(baseaddr + BUNDLE_SIZE_HEADER);
+    j = MEMREF_ULONG(baseaddr + BUNDLE_SIZE_HEADER);
     asm volatile ("MOV %0, R0" ::"m"(j)); // implicit jump ... restored!
 }
 
