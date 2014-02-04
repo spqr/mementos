@@ -46,9 +46,9 @@ void __mementos_checkpoint (void) {
     __mementos_log_event(MEMENTOS_STATUS_STARTING_CHECKPOINT);
 
     // push all the registers onto the stack
-    asm volatile ("PUSH 2(R1)"); // PC will appear at 56(R1)
+    asm volatile ("PUSH 4(R1)"); // PC will appear at 56(R1)
     asm volatile ("PUSH R1");    // SP will appear at 52(R1)
-    asm volatile ("ADD #6, 0(R1)"); // to account for 2xPC + R1 itself
+    asm volatile ("ADD #12, 0(R1)"); // to account for 2xPC + R1 itself
     asm volatile ("PUSH R2");    // R2  will appear at 48(R1)
     //asm volatile ("PUSH R3"); // skip R3 (constant generator)
     asm volatile ("PUSH R4");    // R4  will appear at 44(R1)
