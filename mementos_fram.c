@@ -79,39 +79,39 @@ void __mementos_checkpoint (void) {
     asm volatile ("MOV #" xstr(TOPOFSTACK) ", R13");
     asm volatile ("SUB %0, R13" ::"m"(j)); // j == old stack pointer
 
-    // write size of stack (R13) to high byte at baseaddr
+    // write size of stack (R13) to high word at baseaddr
     asm volatile ("MOV %0, R12" ::"m"(baseaddr));
-    asm volatile ("MOV.B R13, 1(R12)");
+    asm volatile ("MOV R13, 2(R12)");
 
     // store GlobalAllocSize into R13, round it up to the next word boundary
     asm volatile ("MOV %0, R13" ::"m"(GlobalAllocSize));
     asm volatile ("INC R13");
     asm volatile ("AND #0xFE, R13");
 
-    // write GlobalAllocSize to low byte at baseaddr
-    asm volatile ("MOV.B R13, 0(R12)");
+    // write GlobalAllocSize to low word at baseaddr
+    asm volatile ("MOV R13, 0(R12)");
 
     asm volatile ("POP R13");
     asm volatile ("POP R12");
 
     /********** phase #1: checkpoint registers. **********/
     asm volatile ("MOV %0, R14" ::"m"(baseaddr));
-    asm volatile ("POP 30(R14)\n\t" // R15
-                  "POP 28(R14)\n\t" // R14
-                  "POP 26(R14)\n\t" // R13
-                  "POP 24(R14)\n\t" // R12
-                  "POP 22(R14)\n\t" // R11
-                  "POP 20(R14)\n\t" // R10
-                  "POP 18(R14)\n\t" // R9
-                  "POP 16(R14)\n\t" // R8
-                  "POP 14(R14)\n\t" // R7
-                  "POP 12(R14)\n\t" // R6
-                  "POP 10(R14)\n\t" // R5
-                  "POP 8(R14)\n\t"  // R4
+    asm volatile ("POP 60(R14)\n\t" // R15 // XXX XXX XXX multiply these by 2
+                  "POP 56(R14)\n\t" // R14
+                  "POP 52(R14)\n\t" // R13
+                  "POP 48(R14)\n\t" // R12
+                  "POP 44(R14)\n\t" // R11
+                  "POP 40(R14)\n\t" // R10
+                  "POP 36(R14)\n\t" // R9
+                  "POP 32(R14)\n\t" // R8
+                  "POP 28(R14)\n\t" // R7
+                  "POP 24(R14)\n\t" // R6
+                  "POP 20(R14)\n\t" // R5
+                  "POP 16(R14)\n\t"  // R4
                   // skip R3 (constant generator)
-                  "POP 6(R14)\n\t"  // R2
-                  "POP 4(R14)\n\t"  // R1
-                  "POP 2(R14)");    // R0
+                  "POP 12(R14)\n\t"  // R2
+                  "POP 8(R14)\n\t"  // R1
+                  "POP 4(R14)");    // R0
     asm volatile ("MOV R14, %0" :"=m"(xxx):);
 
     /********** phase #2: checkpoint memory. **********/
