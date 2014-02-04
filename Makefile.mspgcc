@@ -4,7 +4,7 @@ CFLAGS=-mmcu=msp430fr5969 -Iinclude
 VTHRESH=2.7
 
 .DUMMY: all
-all: mementos_fram.a
+all: libmementos_fram.a
 
 include/mementos.h: include/mementos.h.tmpl
 	scripts/setthresh.pl $(VTHRESH) $(TIMERINT) $^ > $@
@@ -14,8 +14,8 @@ include/mementos.h: include/mementos.h.tmpl
 
 %.c: include/mementos.h
 
-mementos_fram.a: mementos.o mementos_fram.o
+libmementos_fram.a: mementos.o mementos_fram.o
 	msp430-ar r $@ $^
 
 clean:
-	$(RM) mementos_fram.a *.o
+	$(RM) libmementos_fram.a *.o

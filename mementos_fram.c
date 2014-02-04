@@ -5,6 +5,8 @@
 
 extern unsigned int i, j, k, baseaddr;
 
+unsigned int GlobalAllocSize = 0;
+
 #ifndef MEMENTOS_FRAM
 #error Inappropriate use of mementos_fram.c without MEMENTOS_FRAM defined
 #endif
@@ -12,7 +14,7 @@ extern unsigned int i, j, k, baseaddr;
 void __mementos_checkpoint (void) {
     /* Size of globals in bytes.  Count this far from the beginning of RAM to
      * capture globals.  Comes from the AddGlobalSizeGlobal pass. */
-    extern int GlobalAllocSize;
+    //extern int GlobalAllocSize;
 
 #ifndef MEMENTOS_ORACLE // always checkpoint when called in oracle mode
 #ifdef MEMENTOS_TIMER
@@ -139,7 +141,7 @@ void __mementos_checkpoint (void) {
 /* find a place in the reserved FRAM area for storage of a new bundle of state.
  * */
 unsigned long __mementos_locate_next_bundle (unsigned long sp /* hack */) {
-    extern int GlobalAllocSize;
+    //extern int GlobalAllocSize;
     unsigned int size, b, bsize, next;
     unsigned long baseaddr;
     unsigned long target;
@@ -185,7 +187,7 @@ unsigned int __mementos_bundle_in_range (unsigned long bun_addr) {
     return ((bun_addr >= FRAM_FIRST_BUNDLE_SEG) && (bun_addr < FRAM_END));
 }
 
-void mementos_fram_clear (unsigned long target) {
+void __mementos_fram_clear (unsigned long target) {
     unsigned long i;
     for (i = target; i < (target + (FRAM_SECOND_BUNDLE_SEG - FRAM_FIRST_BUNDLE_SEG)); ++i) {
         i = 0;
