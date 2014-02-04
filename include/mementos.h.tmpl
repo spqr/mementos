@@ -152,14 +152,19 @@ unsigned int __mementos_find_active_bundle (void);
 #endif
 
 void __mementos_atboot_cleanup (void);
-unsigned int __mementos_bundle_in_range (unsigned int);
 void __mementos_inactive_cleanup (unsigned int);
+
+#ifdef MEMENTOS_FRAM
+void __mementos_fram_clear(unsigned long);
+unsigned int __mementos_bundle_in_range (unsigned long);
+#endif
 
 #ifdef MEMENTOS_FLASH
 void __mementos_erase_segment (unsigned int);
 void __mementos_mark_segment_erase (unsigned int);
 unsigned int __mementos_segment_is_empty (unsigned int);
 unsigned int __mementos_segment_marked_erase (unsigned int);
+unsigned int __mementos_bundle_in_range (unsigned int);
 #endif
 
 #ifdef MEMENTOS_LOGGING

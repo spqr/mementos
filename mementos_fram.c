@@ -169,16 +169,10 @@ unsigned long __mementos_locate_next_bundle (unsigned long sp /* hack */) {
 }
 
 unsigned long __mementos_find_active_bundle (void) {
-    switch MEMREF(ACTIVE_BUNDLE_PTR) {
-    case FRAM_FIRST_BUNDLE_SEG:
-        return FRAM_FIRST_BUNDLE_SEG;
-        break;
-    case FRAM_SECOND_BUNDLE_SEG:
-        return FRAM_SECOND_BUNDLE_SEG;
-        break;
-    default:
-        return 0xffff;
-    }
+    unsigned long active_ptr = MEMREF(ACTIVE_BUNDLE_PTR);
+    if (__mementos_bundle_in_range(active_ptr))
+        return active_ptr;
+    return 0xffff;
 }
 
 void __mementos_atboot_cleanup (void) {
@@ -187,7 +181,7 @@ void __mementos_atboot_cleanup (void) {
 void __mementos_inactive_cleanup (unsigned int active_bundle_addr) {
 }
 
-unsigned int __mementos_bundle_in_range (unsigned int bun_addr) {
+unsigned int __mementos_bundle_in_range (unsigned long bun_addr) {
     return ((bun_addr >= FRAM_FIRST_BUNDLE_SEG) && (bun_addr < FRAM_END));
 }
 
