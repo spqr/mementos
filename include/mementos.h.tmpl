@@ -85,10 +85,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #  define TOPOFSTACK 0x23FF
 #  define STARTOFDATA 0x1C00
 #  define FRAM_END 0x13FFF
-#  define FRAM_MEMENTOS_BEGIN (FRAM_END+1 - (2*(TOPOFSTACK+1 - STARTOFDATA)))
+#  define FRAM_FIRST_BUNDLE_SEG (FRAM_END+1 - (2*(TOPOFSTACK+1 - STARTOFDATA)))
+#  define FRAM_SECOND_BUNDLE_SEG (FRAM_FIRST_BUNDLE_SEG + (TOPOFSTACK+1 - STARTOFDATA))
+#  define ACTIVE_BUNDLE_PTR (FRAM_FIRST_BUNDLE_SEG - (sizeof(unsigned long)))
 # else
 #  error Unsupported hardware; see include/mementos.h.
 # endif
+
+#define RAM_SIZE (TOPOFSTACK+1 - STARTOFDATA)
 
 #ifdef MEMENTOS_HARDWARE
 # include "pinDefWISP4.1DL.h"
@@ -139,8 +143,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /* function prototypes */
 void __mementos_checkpoint (void);
 void __mementos_restore (unsigned int);
+#ifdef MEMENTOS_FRAM
+unsigned long __mementos_locate_next_bundle (unsigned long);
+unsigned long __mementos_find_active_bundle (void);
+#else
 unsigned int __mementos_locate_next_bundle (unsigned int);
 unsigned int __mementos_find_active_bundle (void);
+#endif
 
 void __mementos_atboot_cleanup (void);
 unsigned int __mementos_bundle_in_range (unsigned int);
