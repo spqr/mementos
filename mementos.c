@@ -28,7 +28,7 @@ void __mementos_restore (unsigned long b) {
 
     /* restore the stack by walking from the top to the bottom of the stack
      * portion of the checkpoint */
-    tmpsize = MEMREF_ULONG(baseaddr) >> 8; // stack size
+    tmpsize = MEMREF_UINT(baseaddr) >> 8; // stack size
     for (i = 0; i < tmpsize; i += 2) {
         /* summary:
         MEMREF(TOPOFSTACK - i) = MEMREF(baseaddr + 30 + tmpsize - i);
@@ -132,7 +132,7 @@ void __mementos_restore (unsigned long b) {
                    * here to when we restore the PC */
                   "MOV  2(R1), R1");
 
-    j = MEMREF_ULONG(baseaddr + BUNDLE_SIZE_HEADER);
+    j = MEMREF_UINT(baseaddr + BUNDLE_SIZE_HEADER);
     asm volatile ("MOV %0, R0" ::"m"(j)); // implicit jump ... restored!
 }
 
