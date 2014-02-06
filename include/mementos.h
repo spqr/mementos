@@ -115,7 +115,7 @@
 void __mementos_checkpoint (void);
 void __mementos_restore (unsigned long);
 #ifdef MEMENTOS_FRAM
-unsigned long __mementos_locate_next_bundle (unsigned long);
+unsigned long __mementos_locate_next_bundle (void);
 unsigned long __mementos_find_active_bundle (void);
 #else
 unsigned int __mementos_locate_next_bundle (unsigned int);

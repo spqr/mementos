@@ -3,7 +3,7 @@
 #include <mementos.h>
 #include <msp430builtins.h>
 
-extern unsigned int i, j, k, l;
+extern unsigned int i, j, k;
 extern unsigned long baseaddr;
 unsigned long xxx = 0;
 
@@ -62,7 +62,7 @@ void __mementos_checkpoint (void) {
     asm volatile ("MOV 52(R1), %0" :"=m"(j)); // j = SP
     /* j now contains the pre-call value of the stack pointer */
 
-    baseaddr = __mementos_locate_next_bundle(j);
+    baseaddr = __mementos_locate_next_bundle();
 
     /********** phase #0: save size header (2 bytes) **********/
     asm volatile ("PUSH R12");
@@ -136,21 +136,10 @@ void __mementos_checkpoint (void) {
 
 /* find a place in the reserved FRAM area for storage of a new bundle of state.
  * */
-unsigned long __mementos_locate_next_bundle (unsigned long sp /* hack */) {
-    //extern int GlobalAllocSize;
-    unsigned int size, b, bsize, next;
+unsigned long __mementos_locate_next_bundle () {
     unsigned long baseaddr;
     unsigned long target;
 
-    /* how big is the bundle we'd like to store? */
-    size =
-        BUNDLE_SIZE_HEADER // bytes for the bundle header
-        + BUNDLE_SIZE_REGISTERS // bytes for the register portion
-        + (TOPOFSTACK - sp) // bytes for the stack portion
-        + ROUND_TO_NEXT_EVEN(GlobalAllocSize) // bytes for the dataseg portion
-        + BUNDLE_SIZE_MAGIC; // bytes for the magic number
-
-    /* where does the currently active bundle start? */
     baseaddr = __mementos_find_active_bundle();
     switch (baseaddr) {
     case FRAM_FIRST_BUNDLE_SEG:
@@ -162,7 +151,6 @@ unsigned long __mementos_locate_next_bundle (unsigned long sp /* hack */) {
         target = FRAM_FIRST_BUNDLE_SEG;
         break;
     }
-    //__mementos_fram_clear(target);
     return target;
 }
 
