@@ -3,7 +3,7 @@
 #include <mementos.h>
 #include <msp430builtins.h>
 
-extern unsigned int i, j, k;
+extern unsigned int i, j, k, l;
 extern unsigned long baseaddr;
 unsigned long xxx = 0;
 
@@ -22,21 +22,11 @@ void __mementos_checkpoint (void) {
 #ifdef MEMENTOS_TIMER
     /* early exit if not ok to checkpoint */
     if (!ok_to_checkpoint) {
-        /*
-        // reenable interrupts -- but only if they were enabled when we started
-        if (interrupts_enabled & 0x8) // GIE bit in SR/R2 (see MSP430 manual)
-            asm volatile ("EINT");
-        */
         return;
     }
 #endif // MEMENTOS_TIMER
     /* early exit if voltage check says that checkpoint is unnecessary */
     if (VOLTAGE_CHECK >= V_THRESH) {
-        /*
-        // reenable interrupts -- but only if they were enabled when we started
-        if (interrupts_enabled & 0x8) // GIE bit in SR/R2 (see MSP430 manual)
-            asm volatile ("EINT");
-        */
 #ifdef MEMENTOS_TIMER
         ok_to_checkpoint = 0; // put the flag back down
 #endif // MEMENTOS_TIMER
@@ -45,24 +35,27 @@ void __mementos_checkpoint (void) {
 #endif // MEMENTOS_ORACLE
     __mementos_log_event(MEMENTOS_STATUS_STARTING_CHECKPOINT);
 
-    // push all the registers onto the stack
-    asm volatile ("PUSH 4(R1)"); // PC will appear at 56(R1)
-    asm volatile ("PUSH R1");    // SP will appear at 52(R1)
-    asm volatile ("ADD #12, 0(R1)"); // to account for 2xPC + R1 itself
-    asm volatile ("PUSH R2");    // R2  will appear at 48(R1)
-    //asm volatile ("PUSH R3"); // skip R3 (constant generator)
-    asm volatile ("PUSH R4");    // R4  will appear at 44(R1)
-    asm volatile ("PUSH R5");    // R5  will appear at 40(R1)
-    asm volatile ("PUSH R6");    // R6  will appear at 36(R1)
-    asm volatile ("PUSH R7");    // R7  will appear at 32(R1)
-    asm volatile ("PUSH R8");    // R8  will appear at 28(R1)
-    asm volatile ("PUSH R9");    // R9  will appear at 24(R1)
-    asm volatile ("PUSH R10");   // R10 will appear at 20(R1)
-    asm volatile ("PUSH R11");   // R11 will appear at 16(R1)
-    asm volatile ("PUSH R12");   // R12 will appear at 12(R1)
-    asm volatile ("PUSH R13");   // R13 will appear at 8(R1)
-    asm volatile ("PUSH R14");   // R14 will appear at 4(R1)
-    asm volatile ("PUSH R15");     // R15 will appear at 0(R1)
+    /* push all the registers onto the stack; they will be copied to NVRAM from
+     * there.  any funny business here is to capture the values of the registers
+     * as they appeared just before this function was called -- some
+     * backtracking is necessary. */
+    asm volatile ("PUSH 4(R1)\n\t"     // PC will appear at 56(R1)
+                  "PUSH R1\n\t"        // SP will appear at 52(R1)
+                  "ADD #12, 0(R1)\n\t" // +12 to account for retaddr + PC + R1
+                  "PUSH R2\n\t"        // R2  will appear at 48(R1)
+                                       // skip R3 (constant generator)
+                  "PUSH R4\n\t"        // R4  will appear at 44(R1)
+                  "PUSH R5\n\t"        // R5  will appear at 40(R1)
+                  "PUSH R6\n\t"        // R6  will appear at 36(R1)
+                  "PUSH R7\n\t"        // R7  will appear at 32(R1)
+                  "PUSH R8\n\t"        // R8  will appear at 28(R1)
+                  "PUSH R9\n\t"        // R9  will appear at 24(R1)
+                  "PUSH R10\n\t"       // R10 will appear at 20(R1)
+                  "PUSH R11\n\t"       // R11 will appear at 16(R1)
+                  "PUSH R12\n\t"       // R12 will appear at 12(R1)
+                  "PUSH R13\n\t"       // R13 will appear at 8(R1)
+                  "PUSH R14\n\t"       // R14 will appear at 4(R1)
+                  "PUSH R15");         // R15 will appear at 0(R1)
 
     /**** figure out where to put this checkpoint bundle ****/
     /* precompute the size of the stack portion of the bundle */
@@ -96,7 +89,7 @@ void __mementos_checkpoint (void) {
 
     /********** phase #1: checkpoint registers. **********/
     asm volatile ("MOV %0, R14" ::"m"(baseaddr));
-    asm volatile ("POP 60(R14)\n\t" // R15 // XXX XXX XXX multiply these by 2
+    asm volatile ("POP 60(R14)\n\t" // R15
                   "POP 56(R14)\n\t" // R14
                   "POP 52(R14)\n\t" // R13
                   "POP 48(R14)\n\t" // R12
@@ -116,22 +109,22 @@ void __mementos_checkpoint (void) {
 
     /********** phase #2: checkpoint memory. **********/
 
-    /* checkpoint the stack */
-    i = j;
-    j = TOPOFSTACK - i;
-    while ((TOPOFSTACK - i) > 0) { // walk up from SP to ToS & copy to flash
-        MEMREF_ULONG((baseaddr + BUNDLE_SIZE_HEADER + BUNDLE_SIZE_REGISTERS + j-(TOPOFSTACK-i))) = MEMREF_ULONG(i);
-        i += sizeof(unsigned long);
+    /* checkpoint the stack by walking from SP to ToS */
+    k = baseaddr + BUNDLE_SIZE_HEADER + BUNDLE_SIZE_REGISTERS;
+    for (i = j; i < TOPOFSTACK; i += sizeof(unsigned long)) {
+        MEMREF_ULONG(k + (i - j)) = MEMREF_ULONG(i);
     }
+    k += (i - j); // skip over checkpointed stack
 
     /* checkpoint as much of the data segment as is necessary */
-    j += BUNDLE_SIZE_HEADER + BUNDLE_SIZE_REGISTERS;
     for (i = STARTOFDATA; i < STARTOFDATA+ROUND_TO_NEXT_EVEN(GlobalAllocSize);
-            i += sizeof(unsigned int), j += sizeof(unsigned int)) {
-        MEMREF_UINT(baseaddr + j) = MEMREF_UINT(i);
+            i += sizeof(unsigned int)) {
+        MEMREF_UINT(k + (i - STARTOFDATA)) = MEMREF_UINT(i);
     }
+    k += (i - STARTOFDATA); // skip over checkpointed globals
+
     // write the magic number
-    MEMREF_ULONG(baseaddr + j) = MEMENTOS_MAGIC_NUMBER;
+    MEMREF_UINT(k) = MEMENTOS_MAGIC_NUMBER;
     MEMREF_ULONG(ACTIVE_BUNDLE_PTR) = baseaddr;
     __mementos_log_event(MEMENTOS_STATUS_COMPLETED_CHECKPOINT);
 
