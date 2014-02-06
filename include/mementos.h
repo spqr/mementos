@@ -176,11 +176,12 @@ void Timer_A (void) __attribute__((interrupt(12))); // 0xFFEC for F1611 XXX
 
 #ifdef MEMENTOS_FRAM
 #  define REGISTER_BYTES (sizeof(unsigned long)) // bytes in a register
+#  define BUNDLE_SIZE_REGISTERS 60 // (15 * REGISTER_BYTES)
 #else
 #  define REGISTER_BYTES (sizeof(unsigned int))
+#  define BUNDLE_SIZE_REGISTERS 30 // (15 * REGISTER_BYTES)
 #endif
 
-#define BUNDLE_SIZE_REGISTERS (15 * REGISTER_BYTES)
 #define BUNDLE_SIZE_HEADER 2     // stack size (1 byte) + dataseg size (1 byte)
 #define BUNDLE_SIZE_MAGIC 2      // 2 bytes for MEMENTOS_MAGIC_NUMBER
 
