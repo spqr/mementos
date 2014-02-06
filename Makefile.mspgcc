@@ -4,9 +4,6 @@ CFLAGS=-mmcu=msp430fr5969 -g -Iinclude
 .DUMMY: all
 all: libmementos_fram.a
 
-include/mementos.h: include/mementos.h.tmpl
-	cp $< $@
-
 %.s: %.c
 	$(CC) $(CFLAGS) -S -o $@ $^
 
