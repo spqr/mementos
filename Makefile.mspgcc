@@ -11,6 +11,7 @@ all: libmementos_fram.a
 
 libmementos_fram.a: mementos.o mementos_fram.o
 	msp430-ar r $@ $^
+	msp430-ranlib $@
 
 clean:
 	$(RM) libmementos_fram.a *.o
