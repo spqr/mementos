@@ -1,5 +1,6 @@
 CC=msp430-gcc
 CFLAGS=-mmcu=msp430fr5969 -g -Iinclude
+LDFLAGS=-mmcu=msp430fr5969 -Wl,-T ldscripts/msp430.x -L. -lmementos_fram
 
 .DUMMY: all
 all: libmementos_fram.a
@@ -11,6 +12,10 @@ all: libmementos_fram.a
 
 libmementos_fram.a: mementos.o mementos_fram.o
 	msp430-ar r $@ $^
+	msp430-ranlib $@
+
+testexe: libmementos_fram.a testexe.o
+	msp430-gcc -o $@ testexe.o $(LDFLAGS)
 
 clean:
-	$(RM) libmementos_fram.a *.o
+	$(RM) libmementos_fram.a *.o testexe
