@@ -8,7 +8,7 @@ MEMORY {
   infoc            : ORIGIN = 0x1880, LENGTH = 0x0080 /* END=0x1900, size 128 */
   infob            : ORIGIN = 0x1900, LENGTH = 0x0080 /* END=0x1980, size 128 */
   infoa            : ORIGIN = 0x1980, LENGTH = 0x0080 /* END=0x1a00, size 128 */
-  ram (wx)         : ORIGIN = 0x1c00, LENGTH = 0x0800 /* END=0x2400, size 2K */
+  ram (wx)         : ORIGIN = 0x1c10, LENGTH = 0x07f0 /* END=0x2400, size 2K-16B */
   rom (rx)         : ORIGIN = 0x4400, LENGTH = 0xbb80 /* END=0xff80, size 48000 */
   vectors          : ORIGIN = 0xff80, LENGTH = 0x0080 /* END=0x10000, size 128 as 64 2-byte segments */
   far_rom          : ORIGIN = 0x00010000, LENGTH = 0x00004000 /* END=0x00014000, size 16K */
