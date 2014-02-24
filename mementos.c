@@ -52,7 +52,7 @@ void __mementos_restore (unsigned int b) {
         // k = baseaddr + BUNDLE_SIZE_REGISTERS + 4 + tmpsize - i;
         asm volatile("MOV %1, %0" :"=m"(k) :"m"(baseaddr));
         asm volatile("ADD #" xstr(BUNDLE_SIZE_REGISTERS) ", %0" ::"m"(k));
-        asm volatile("ADD #4, %0" ::"m"(k));
+        asm volatile("ADD #2, %0" ::"m"(k));
         asm volatile("ADD %1, %0" :"=m"(k) :"m"(tmpsize));
         asm volatile("SUB %1, %0" :"=m"(k) :"m"(i));
 

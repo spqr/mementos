@@ -5,7 +5,6 @@
 
 extern unsigned int i, j, k;
 extern unsigned int baseaddr;
-unsigned long xxx = 0;
 
 unsigned int GlobalAllocSize = 0;
 
@@ -42,7 +41,7 @@ void __mementos_checkpoint (void) {
      
     asm volatile ("PUSH 4(R1)");     // PC will appear at 28(R1)
     asm volatile ("PUSH R1");        // SP will appear at 26(R1)
-    asm volatile ("ADD #12, 0(R1)"); // +12 to account for retaddr + PC + R1
+    asm volatile ("ADD #6, 0(R1)"); // +6 /*brandon*/ to account for retaddr + PC + R1
     asm volatile ("PUSH R2");        // R2  will appear at 24(R1)
     // skip R3 (constant generator)
     asm volatile ("PUSH R4");        // R4  will appear at 22(R1)
@@ -109,7 +108,6 @@ void __mementos_checkpoint (void) {
     asm volatile ("POP 8(R14)");  // R2
     asm volatile ("POP 6(R14)");  // R1
     asm volatile ("POP 4(R14)");    // R0
-    asm volatile ("MOV R14, %0" :"=m"(xxx):);
 
     /********** phase #2: checkpoint memory. **********/
 
