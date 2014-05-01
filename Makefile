@@ -23,6 +23,10 @@ MCLIBS += $(MYLIBS)
 MEMENTOS_SRCS =
 
 ifdef TIMER
+override CFLAGS += -DMEMENTOS_VOLTAGE_CHECK
+endif
+
+ifdef TIMER
 override CFLAGS += -DMEMENTOS_TIMER
 endif
 

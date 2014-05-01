@@ -33,6 +33,7 @@ void __mementos_checkpoint (void) {
     }
 #endif // MEMENTOS_TIMER
     /* early exit if voltage check says that checkpoint is unnecessary */
+#ifdef MEMENTOS_VOLTAGE_CHECK
     if (VOLTAGE_CHECK >= V_THRESH) {
         /*
         // reenable interrupts -- but only if they were enabled when we started
@@ -44,6 +45,7 @@ void __mementos_checkpoint (void) {
 #endif // MEMENTOS_TIMER
         asm volatile ("RET"); // would 'return', but that triggers a bug XXX
     }
+#endif // MEMENTOS_VOLTAGE_CHECK
 #endif // MEMENTOS_ORACLE
     __mementos_log_event(MEMENTOS_STATUS_STARTING_CHECKPOINT);
 
