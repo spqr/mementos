@@ -24,6 +24,7 @@ void __mementos_checkpoint (void) {
         return;
     }
 #endif // MEMENTOS_TIMER
+#ifdef MEMENTOS_VOLTAGE_CHECK
     /* early exit if voltage check says that checkpoint is unnecessary */
     if (VOLTAGE_CHECK >= V_THRESH) {
 #ifdef MEMENTOS_TIMER
@@ -31,6 +32,7 @@ void __mementos_checkpoint (void) {
 #endif // MEMENTOS_TIMER
         asm volatile ("RET"); // would 'return', but that triggers a bug XXX
     }
+#endif // MEMENTOS_VOLTAGE_CHECK
 #endif // MEMENTOS_ORACLE
     __mementos_log_event(MEMENTOS_STATUS_STARTING_CHECKPOINT);
 
@@ -38,13 +40,26 @@ void __mementos_checkpoint (void) {
      * there.  any funny business here is to capture the values of the registers
      * as they appeared just before this function was called -- some
      * backtracking is necessary. */
+
+    /*Note on R4:
+      R4 was pushed to the stack during the preamble.  We need to get it back*/
+    /*That push means R1+2, then we push PC, SP, and R2, which means we need R1+8*/ 
+
+    /*Note on NOP:
+      There appears to be an implementation bug in the MSP430FR5969 that incorrectly
+      increments the PC by only 2 after the PUSH 4(R1) that executes.  The PC is then
+      wrong and execution diverges.  I think this is related to erratum CPU40 documented
+      here http://www.ti.com/lit/er/slaz473f/slaz473f.pdf.  The setup does not exactly
+      match but the behavior seems to be the same.
+    */
      
     asm volatile ("PUSH 4(R1)");     // PC will appear at 28(R1)
+    asm volatile ("NOP");            // This NOP is required.  See note above.
     asm volatile ("PUSH R1");        // SP will appear at 26(R1)
-    asm volatile ("ADD #6, 0(R1)"); // +6 /*brandon*/ to account for retaddr + PC + R1
+    asm volatile ("ADD #6, 0(R1)");  // +6 to account for FP (pushed in preamble) + PC + R1
     asm volatile ("PUSH R2");        // R2  will appear at 24(R1)
     // skip R3 (constant generator)
-    asm volatile ("PUSH R4");        // R4  will appear at 22(R1)
+    asm volatile ("PUSH 8(R1)");     // R4  will appear at 22(R1) [see note above]
     asm volatile ("PUSH R5");        // R5  will appear at 20(R1)
     asm volatile ("PUSH R6");        // R6  will appear at 18(R1)
     asm volatile ("PUSH R7");        // R7  will appear at 16(R1)
@@ -55,7 +70,7 @@ void __mementos_checkpoint (void) {
     asm volatile ("PUSH R12");       // R12 will appear at 6(R1)
     asm volatile ("PUSH R13");       // R13 will appear at 4(R1)
     asm volatile ("PUSH R14");       // R14 will appear at 2(R1)
-    asm volatile ("PUSH R15");         // R15 will appear at 0(R1)
+    asm volatile ("PUSH R15");       // R15 will appear at 0(R1)
 
     /**** figure out where to put this checkpoint bundle ****/
     /* precompute the size of the stack portion of the bundle */
