@@ -10,3 +10,5 @@ config.log
 /llvm/**/CMakeFiles
 /llvm/**/cmake_install.cmake
 /llvm/lib/Mementos/Makefile
+/libmementos_fram.a
+/mementos*.o
