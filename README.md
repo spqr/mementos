@@ -11,53 +11,43 @@ See [license.txt](https://github.com/spqr/mementos/raw/master/license.txt) for l
 
 ## Building and Installing #
 
-0. Choose an install location like `/opt/mementos` and make a `build` directory.
+**Note: Mementos now works on Wolverine (MSP430FRXXXX) hardware.  Check out the
+`wolverine` branch!**
+
+0. Build and install [LLVM](http://llvm.org/) and
+[Clang](http://clang.llvm.org/) using the [CMake-style
+build](http://llvm.org/docs/CMake.html).  The rest of these instructions assume
+you have chosen to put your LLVM installation in `/opt/llvm`.
+
 ```sh
-$ sudo mkdir -p /opt/mementos
-$ sudo chown -R $USER /opt/mementos
-$ cd /opt/mementos
-$ mkdir -p src build/llvm
+# download LLVM, Clang, compiler-rt to ~/tmp/llvm-3.5.0.src per LLVM's
+# build instructions
+...
+$ cmake -DLLVM_TARGETS_TO_BUILD="X86;MSP430" -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=/opt/llvm ~/tmp/llvm-3.5.0.src
 ```
 
-1. Build and install [LLVM](http://llvm.org/releases/) and [clang](http://clang.llvm.org/).  Use the [CMake-style build](http://llvm.org/docs/CMake.html).
+1. Install an MSP430 compiler toolchain such as mspgcc or gcc 4.9 (which
+includes an MSP430 backend in later releases).  If you are using mspgcc, ensure
+that `msp430-gcc` is in your `$PATH`.
+
+2. Clone the Mementos repository.
 ```sh
-$ cd /opt/mementos/src
-$ wget http://llvm.org/releases/3.3/llvm-3.3.src.tar.gz
-$ wget http://llvm.org/releases/3.3/cfe-3.3.src.tar.gz
-$ tar zxvf llvm-3.3.src.tar.gz
-$ cd llvm-3.3-src/tools
-$ tar zxvf ../../cfe-3.3.src.tar.gz
-$ mv cfe-3.3-src clang
-$ cd /opt/mementos/build/llvm
-$ cmake -DCMAKE_INSTALL_PREFIX=/opt/mementos ../../src/llvm-3.3-src
-$ make
+$ git clone git@github.com:spqr/mementos.git
+$ export MEMENTOS="$PWD/mementos"
+```
+
+3. Build and install Mementos's LLVM passes:
+```sh
+$ cd "$MEMENTOS"/llvm
+$ mkdir build && cd build
+$ cmake -DLLVM_ROOT=/opt/llvm ..
 $ make install
 ```
 
-3. Install [mspgcc](http://mspgcc.sourceforge.net/).  If you're on a Mac, the easiest way (as of December 2011) is via [Fink](http://www.finkproject.org/) or [MacPorts](http://www.macports.org/).
+4. Configure Mementos's non-LLVM component:
 ```sh
-$ fink install msp430-gcc msp430-libc mspdebug
-# or
-$ sudo port install msp430-gcc msp430-libc mspdebug
-```
-If you're on Ubuntu, use the gcc-msp430 package:
-```sh
-$ sudo aptitude install gcc-msp430
-```
-
-4. Clone the _mementos_ repository and build and install its LLVM component.  Manipulate your `$PATH` as below to build this component with the Clang you just built.
-```sh
-$ cd /opt/mementos/src
-$ git clone git://github.com/spqr/mementos.git mementos
-$ cd mementos/llvm
-$ cmake -DCMAKE_PREFIX_PATH=/opt/mementos -DCMAKE_INSTALL_PREFIX=/opt/mementos .
-$ make
-$ make install
-```
-
-5. Configure Mementos's non-LLVM component:
-```sh
-$ cd /opt/mementos/src/mementos
+$ cd "$MEMENTOS"
 $ ./configure
 ```
 
@@ -69,7 +59,9 @@ $ cd mspsim
 $ ant
 ```
 
-Now you can [instrument your programs with Mementos](https://github.com/spqr/mementos/wiki/Mementos-izing-a-Program) and run them in MSPsim.
+Now you can [instrument your programs with
+Mementos](https://github.com/spqr/mementos/wiki/Mementos-izing-a-Program) and
+run them in MSPsim.
 
 ### Dynamic symbol errors when running opt
 
@@ -78,8 +70,6 @@ On OS X (and possibly other OSes), if you get an [error about a missing symbol](
 ## Mementos-izing a Program #
 
 By _Mementosize_ a program, we mean instrument the program with energy checks called _trigger points_.  By default, Mementos will build several variants of your program around several different instrumentation strategies: loop-latch instrumentation, function-return instrumentation, and timer-aided loop-latch instrumentation.  We'll call these variants `myfoo+latch`, `myfoo+return`, and `myfoo+timer`.  It additionally tries to build separate "plain" (uninstrumented) versions with clang and mspgcc.
-
-XXX We'll write more here soon.
 
 1. Make sure the program is in a single `.c` file; let's call it e.g. `myfoo.c`.
 2. Put the program in `src/mementos` (see below).
@@ -92,8 +82,6 @@ $ make TARGET=myfoo
 
 Temporary link to download simulator based on MSPsim:
 [[http://www.cs.umass.edu/~ransford/mementos-downloads/mspsim-mementos-r571.tar.gz]]
-
-XXX We'll write more here soon.
 
 ## Caveats #
 

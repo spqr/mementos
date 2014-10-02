@@ -1,3 +1,6 @@
+NOTE: these instructions apply only to the DL WISP 4.1 -- see
+http://github.com/wisp/dlwisp41.
+
 For logging (make HARDWARE=1 LOGGING=1), we use these pins on the DL WISP 4.1:
  > P1.4
  > P2.3
