@@ -1,8 +1,10 @@
+cmake_minimum_required(VERSION 2.8)
+set(LLVM_DIR "${LLVM_ROOT}/share/llvm/cmake")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${LLVM_DIR})
+
 include_directories("include")
 
 find_package(LLVM)
-
-# Define add_llvm_* macro's.
 include(AddLLVM)
 
 add_definitions(${LLVM_DEFINITIONS})
