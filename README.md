@@ -9,6 +9,11 @@ The [ASPLOS '11 paper](https://spqr.eecs.umich.edu/papers/ransford-mementos-aspl
 
 See [license.txt](https://github.com/spqr/mementos/raw/master/license.txt) for licensing terms.
 
+## Special Wolverine instructions ##
+
+Use `make -f Makefile.wolverine` to build `libmementos_fram.a`, which you can
+link into your own programs.
+
 ## Building and Installing #
 
 **Note: Mementos now works on Wolverine (MSP430FRXXXX) hardware.  Check out the
